@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = Field(default="development")
     PORT: int = Field(default=8000)
     LOG_LEVEL: str = Field(default="INFO")
+    VERSION: str = Field(default="1.0.0")
 
     # CORS Configuration
     CORS_ORIGINS: List[str] = Field(default=[])

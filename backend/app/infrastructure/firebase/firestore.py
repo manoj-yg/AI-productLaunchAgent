@@ -4,10 +4,12 @@ from app.domain.repositories import WorkflowRepository
 
 
 class FirestoreWorkflowRepository(WorkflowRepository):
+    _mock_db = {}  # In-memory shared mock db for scaffolding
+
     def __init__(self):
         # Scaffolding: Initialize firebase-admin Firestore client here
         # E.g., self.db = firestore.client()
-        self._mock_db = {}  # In-memory mock db for scaffolding
+        pass
 
     async def create_workflow(self, workflow: LaunchWorkflow) -> LaunchWorkflow:
         """

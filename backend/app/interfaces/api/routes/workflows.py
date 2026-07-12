@@ -1,27 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.interfaces.api.schemas import InitiateWorkflowRequest, HumanReviewRequest, WorkflowResponse, WorkflowListResponse
 from app.use_cases.launch_workflow import LaunchWorkflowUseCase
-from app.infrastructure.firebase.firestore import FirestoreWorkflowRepository
-from app.infrastructure.firebase.storage import FirebaseStorageRepository
-from app.infrastructure.shopify.client import ShopifyAdminServiceClient
-from app.infrastructure.ai.gemini import GeminiAIService
+from app.interfaces.api.dependencies import get_launch_workflow_use_case
 
-api_router = APIRouter()
-
-# Dependency Injection helper for LaunchWorkflowUseCase
-def get_workflow_use_case() -> LaunchWorkflowUseCase:
-    return LaunchWorkflowUseCase(
-        workflow_repo=FirestoreWorkflowRepository(),
-        storage_repo=FirebaseStorageRepository(),
-        shopify_service=ShopifyAdminServiceClient(),
-        ai_service=GeminiAIService()
-    )
+router = APIRouter()
 
 
-@api_router.post("/workflows", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED, tags=["Workflows"])
+@router.post("", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
 async def initiate_workflow(
     request: InitiateWorkflowRequest,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 1: Initialize launch workflow by uploading product details and image paths.
@@ -33,10 +21,10 @@ async def initiate_workflow(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/analyze", response_model=WorkflowResponse, tags=["AI Processing"])
+@router.post("/{workflow_id}/analyze", response_model=WorkflowResponse)
 async def analyze_image(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 2: Run AI Multimodal Vision analysis on the product assets.
@@ -50,10 +38,10 @@ async def analyze_image(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/generate-description", response_model=WorkflowResponse, tags=["AI Processing"])
+@router.post("/{workflow_id}/generate-description", response_model=WorkflowResponse)
 async def generate_description(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 3: Generate SEO-optimized description, title, and tags.
@@ -67,10 +55,10 @@ async def generate_description(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/generate-marketing", response_model=WorkflowResponse, tags=["AI Processing"])
+@router.post("/{workflow_id}/generate-marketing", response_model=WorkflowResponse)
 async def generate_marketing(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 4: Generate contextual social ad copy and newsletters.
@@ -84,10 +72,10 @@ async def generate_marketing(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/generate-prompts", response_model=WorkflowResponse, tags=["AI Processing"])
+@router.post("/{workflow_id}/generate-prompts", response_model=WorkflowResponse)
 async def generate_prompts(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 5: Generate prompts for product backdrop and modeling photos.
@@ -101,10 +89,10 @@ async def generate_prompts(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/validate", response_model=WorkflowResponse, tags=["AI Processing"])
+@router.post("/{workflow_id}/validate", response_model=WorkflowResponse)
 async def validate_content(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 6: Execute AI automated policy and guideline validations.
@@ -118,11 +106,11 @@ async def validate_content(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/review", response_model=WorkflowResponse, tags=["Human Verification"])
+@router.post("/{workflow_id}/review", response_model=WorkflowResponse)
 async def submit_human_review(
     workflow_id: str,
     review: HumanReviewRequest,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stages 7 & 8: Human logs evaluation and approves/rejects the generated release.
@@ -141,10 +129,10 @@ async def submit_human_review(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/publish", response_model=WorkflowResponse, tags=["Publishing"])
+@router.post("/{workflow_id}/publish", response_model=WorkflowResponse)
 async def publish_to_shopify(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 9: Publish the approved product catalog item to Shopify.
@@ -158,10 +146,10 @@ async def publish_to_shopify(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/workflows/{workflow_id}/verify", response_model=WorkflowResponse, tags=["Publishing"])
+@router.post("/{workflow_id}/verify", response_model=WorkflowResponse)
 async def verify_publication(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 10: Verify the published product links are active and accessible.
@@ -175,10 +163,10 @@ async def verify_publication(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.get("/workflows/{workflow_id}", response_model=WorkflowResponse, tags=["Workflows"])
+@router.get("/{workflow_id}", response_model=WorkflowResponse)
 async def get_workflow_report(
     workflow_id: str,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Stage 11: Get workflow report / active status query.
@@ -192,11 +180,11 @@ async def get_workflow_report(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.get("/workflows", response_model=WorkflowListResponse, tags=["Workflows"])
+@router.get("", response_model=WorkflowListResponse)
 async def list_workflows(
     limit: int = 20,
     offset: int = 0,
-    use_case: LaunchWorkflowUseCase = Depends(get_workflow_use_case)
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
 ):
     """
     Lists recent active or completed workflows.
