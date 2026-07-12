@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { workflowApi } from "../services/api"
 
 export type WorkflowState =
   | "UPLOADED"
@@ -115,148 +116,126 @@ interface LaunchState {
   workflows: LaunchWorkflow[]
   activeWorkflowId: string | null
   settings: PlatformSettings
+  loading: boolean
+  error: string | null
+
   // Actions
   login: (username: string) => void
   logout: () => void
-  addWorkflow: (details: ProductDetails) => string
+  fetchWorkflows: () => Promise<void>
+  addWorkflow: (details: ProductDetails, imageFiles?: File[]) => Promise<string>
   deleteWorkflow: (id: string) => void
   updateWorkflowState: (id: string, state: WorkflowState) => void
+  updateWorkflowData: (id: string, data: Partial<LaunchWorkflow>) => void
   runAIPipeline: (id: string) => Promise<void>
-  submitReview: (id: string, isApproved: boolean, notes: string) => void
-  publishToShopify: (id: string) => Promise<void>
+  submitReview: (id: string, isApproved: boolean, notes: string) => Promise<void>
+  publishProduct: (id: string) => Promise<void>
   updateSettings: (settings: Partial<PlatformSettings>) => void
 }
 
-const mockWorkflows: LaunchWorkflow[] = [
-  {
-    id: "wf-01",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 23).toISOString(),
-    state: "COMPLETED",
-    productDetails: {
-      title: "Cozy Cotton Knit Hoodie",
-      rawDescription: "Super soft hoodie made of organic cotton. Cozy fit, double fleece lining.",
-      category: "Apparel",
-      targetAudience: "Young Adults",
-      price: 59.99,
-      sku: "HD-COZY-01",
-      images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&auto=format&fit=crop&q=60"]
-    },
-    imageAnalysis: {
-      productType: "Apparel / Hoodie",
-      features: ["Drawstring hood", "Kangaroo pocket", "Ribbed cuffs"],
-      suggestedColors: ["Navy Blue", "Heather Grey"],
-      materials: ["100% Organic Cotton"],
-      styleKeywords: ["Casual", "Minimalist", "Athleisure"],
-      rawSummary: "The image shows a high-quality navy blue organic cotton hoodie..."
-    },
-    generatedDescription: {
-      title: "Premium Cozy Cotton Knit Hoodie",
-      descriptionHtml: "<p>Elevate your everyday comfort with our <strong>Premium Cozy Cotton Knit Hoodie</strong>. Crafted from 100% certified organic cotton, it features a warm double-fleece lining and classic kangaroo pockets.</p>",
-      seoTitle: "Premium Organic Cotton Hoodie | Cozy Streetwear",
-      seoDescription: "Shop our eco-friendly cozy knit hoodie made from 100% organic cotton. Free shipping on all apparel items.",
-      tags: ["hoodie", "organic-cotton", "casual", "streetwear"]
-    },
-    marketingContent: {
-      socialCopy: {
-        instagram: "Cozy meets green 🌿 Feel the organic softness of our new Knit Hoodie. Tap bio to shop!",
-        facebook: "Stay warm in style. Our 100% Organic Cotton Hoodie is now live. Check out the comfort details.",
-        twitter: "Fresh drop! Double-lined comfort in classic Navy. Shop the Cozy Knit Hoodie today."
-      },
-      adCopy: {
-        metaHeadline: "Cozy Cotton Knit Hoodie - 100% Organic",
-        metaBody: "Soft, warm, and sustainably crafted. Free worldwide shipping for a limited time.",
-        googleHeadline: "Organic Cozy Hoodie - Shop Online"
-      },
-      emailNewsletter: "Hi there!\n\nWe are excited to share our latest sustainable drop..."
-    },
-    imagePrompts: {
-      lifestylePrompts: ["Model walking in park wearing cozy blue hoodie, fall season, high-resolution lifestyle photograph"],
-      studioPrompts: ["Flat lay photography of blue hoodie surrounded by autumn leaves, bright studio lighting"]
-    },
-    validation: {
-      isValid: true,
-      policyCheckPassed: true,
-      suggestions: ["Declare washing instructions explicitly."],
-      logs: ["Spelling: OK", "Shopify policy compliance: Passed", "AI Content Guidelines: Met"]
-    },
-    publication: {
-      shopifyProductId: "shopify-prod-9988",
-      publishedUrl: "https://mock-shop.myshopify.com/products/premium-cozy-cotton-knit-hoodie",
-      publishedAt: new Date(Date.now() - 3600000 * 22).toISOString(),
-      verificationStatus: "verified"
-    }
-  },
-  {
-    id: "wf-02",
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 1).toISOString(),
-    state: "VALIDATED",
-    productDetails: {
-      title: "Eco Bamboo Tumbler",
-      rawDescription: "Bamboo wood tumbler with steel vacuum insulation. Keeps drinks hot for 12 hours.",
-      category: "Kitchenware",
-      targetAudience: "Eco-conscious Professionals",
-      price: 29.99,
-      sku: "TB-BAMB-02",
-      images: ["https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&auto=format&fit=crop&q=60"]
-    },
-    imageAnalysis: {
-      productType: "Drinkware / Tumbler",
-      features: ["Bamboo outer sleeve", "Stainless steel interior", "Leaktight lid"],
-      suggestedColors: ["Natural Wood", "Steel"],
-      materials: ["Organic Bamboo", "Food-Grade Stainless Steel"],
-      styleKeywords: ["Eco-friendly", "Modern", "Office Accessory"],
-      rawSummary: "Visual displays highlight a natural wood grain bamboo tumbler with a brushed metal rim..."
-    },
-    generatedDescription: {
-      title: "Eco-Friendly Bamboo Insulated Tumbler",
-      descriptionHtml: "<p>Stay hydrated sustainably. Features a double-wall stainless steel vacuum chamber wrapped in a real, organic bamboo sleeve.</p>",
-      seoTitle: "Bamboo Insulated Mug | 12Hr Hot/Cold Tumbler",
-      seoDescription: "Double-walled steel insulation meets eco-friendly bamboo wood. Keeps drinks hot for 12h.",
-      tags: ["tumbler", "bamboo", "eco-friendly", "coffee-mug"]
-    },
-    marketingContent: {
-      socialCopy: {
-        instagram: "Ditch plastic, choose bamboo 🎋 Keep your drinks hot/cold for 12 hours. Link in bio!",
-        facebook: "Your morning coffee deserves better. Bring natural bamboo aesthetics to your desk.",
-        twitter: "Vacuum insulated. Wrapped in real bamboo wood. Stay warm responsibly."
-      },
-      adCopy: {
-        metaHeadline: "Bamboo Thermal Tumbler - Eco Desk Essential",
-        metaBody: "Vacuum insulated steel interior with premium organic bamboo shell. Leaktight design.",
-        googleHeadline: "Bamboo Thermal Travel Mug"
-      },
-      emailNewsletter: "Meet your new favorite desk companion..."
-    },
-    imagePrompts: {
-      lifestylePrompts: ["Warm hands holding a bamboo tumbler on a snowy winter morning, close up visual"],
-      studioPrompts: ["Bamboo travel mug standing on a marble kitchen counter, clean modern interior"]
-    },
-    validation: {
-      isValid: true,
-      policyCheckPassed: true,
-      suggestions: ["Specify dishwasher compatibility in description."],
-      logs: ["Spelling: OK", "Policies: Clear"]
-    }
+/**
+ * Maps the snake_case API response into the camelCase frontend structures.
+ */
+function mapApiToWorkflow(data: any): LaunchWorkflow {
+  const pd = data.product_details || {}
+  const ia = data.image_analysis || {}
+  const gd = data.generated_description || {}
+  const mc = data.marketing_content || {}
+  const ip = data.image_prompts || {}
+  const val = data.validation || {}
+  const pub = data.publication || {}
+
+  // Normalize state
+  let state: WorkflowState = "UPLOADED"
+  const rawState = (data.state || "UPLOADED").toUpperCase()
+  if (rawState in ["UPLOADED","ANALYZING","ANALYZED","GENERATING_DESC","DESC_GENERATED",
+    "GENERATING_MKTG","MKTG_GENERATED","GENERATING_PROMPTS","PROMPTS_GENERATED",
+    "VALIDATING","VALIDATED","APPROVED","REJECTED","PUBLISHING","PUBLISHED",
+    "VERIFYING","COMPLETED","FAILED"]) {
+    state = rawState as WorkflowState
+  } else {
+    state = rawState as WorkflowState
   }
-]
+
+  return {
+    id: data.id || data.workflow_id || "",
+    createdAt: data.created_at ? new Date(data.created_at).toISOString() : new Date().toISOString(),
+    updatedAt: data.updated_at ? new Date(data.updated_at).toISOString() : new Date().toISOString(),
+    state,
+    productDetails: {
+      title: pd.title || "",
+      rawDescription: pd.raw_description || "",
+      category: pd.category || "",
+      targetAudience: pd.target_audience || "",
+      price: pd.price || 0,
+      sku: pd.sku || data.id || "",
+      images: pd.images || []
+    },
+    imageAnalysis: ia && ia.product_type ? {
+      productType: ia.product_type || "",
+      features: ia.detected_features || ia.features || [],
+      suggestedColors: ia.suggested_colors || ia.colors || [],
+      materials: ia.materials || [],
+      styleKeywords: ia.style_keywords || [ia.style || ""],
+      rawSummary: ia.raw_analysis || ia.summary || ""
+    } : undefined,
+    generatedDescription: gd && gd.title ? {
+      title: gd.title || "",
+      descriptionHtml: gd.description_html || gd.long_description || "",
+      seoTitle: gd.seo_title || gd.title || "",
+      seoDescription: gd.seo_description || gd.short_description || "",
+      tags: gd.tags || []
+    } : undefined,
+    marketingContent: mc && (mc.social_copy || mc.instagram_caption) ? {
+      socialCopy: {
+        instagram: mc.social_copy?.instagram || mc.instagram_caption || "",
+        facebook: mc.social_copy?.facebook || mc.facebook_post || "",
+        twitter: mc.social_copy?.twitter || mc.twitter_x_post || ""
+      },
+      adCopy: {
+        metaHeadline: mc.ad_copy?.meta_headline || mc.promotional_headline || "",
+        metaBody: mc.ad_copy?.meta_body || mc.banner_text || "",
+        googleHeadline: mc.ad_copy?.google_headline || mc.cta || ""
+      },
+      emailNewsletter: mc.email_newsletter || mc.email_campaign || ""
+    } : undefined,
+    imagePrompts: ip && (ip.lifestyle_prompts || ip.lifestyle_image) ? {
+      lifestylePrompts: ip.lifestyle_prompts || [ip.lifestyle_image || ""],
+      studioPrompts: ip.studio_prompts || [ip.course_thumbnail || "", ip.hero_banner || ""]
+    } : undefined,
+    validation: val && val.is_valid !== undefined ? {
+      isValid: val.is_valid || false,
+      policyCheckPassed: val.policy_check_passed || false,
+      suggestions: val.suggestions || [],
+      logs: val.validation_logs || []
+    } : undefined,
+    publication: pub && pub.shopify_product_id ? {
+      shopifyProductId: pub.shopify_product_id || "",
+      publishedUrl: pub.published_url || "",
+      publishedAt: pub.published_at ? new Date(pub.published_at).toISOString() : "",
+      verificationStatus: pub.verification_status || "pending"
+    } : undefined,
+    errorMessage: data.error_message || undefined
+  }
+}
 
 export const useLaunchStore = create<LaunchState>((set, get) => ({
   user: {
-    username: "Alex Staff",
-    role: "reviewer",
+    username: "Alex Admin",
+    role: "administrator",
     isAuthenticated: true
   },
-  workflows: mockWorkflows,
+  workflows: [],
   activeWorkflowId: null,
   settings: {
-    shopifyShopUrl: "nexus-launch.myshopify.com",
-    shopifyAccessToken: "shpat_********************",
+    shopifyShopUrl: "kiddypi.myshopify.com",
+    shopifyAccessToken: "",
     defaultLanguage: "en",
     brandVoice: "playful",
     primaryColor: "#3b82f6"
   },
+  loading: false,
+  error: null,
 
   login: (username: string) => {
     set({
@@ -270,216 +249,175 @@ export const useLaunchStore = create<LaunchState>((set, get) => ({
 
   logout: () => {
     set({
-      user: {
-        username: "",
-        role: "reviewer",
-        isAuthenticated: false
-      }
+      user: { username: "", role: "reviewer", isAuthenticated: false }
     })
   },
 
-  addWorkflow: (details: ProductDetails) => {
-    const id = `wf-${Math.random().toString(36).substr(2, 9)}`
-    const newWorkflow: LaunchWorkflow = {
-      id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      state: "UPLOADED",
-      productDetails: details
+  fetchWorkflows: async () => {
+    set({ loading: true, error: null })
+    try {
+      const res = await workflowApi.listWorkflows(30, 0)
+      const workflows = (res.workflows || []).map((w: any) => mapApiToWorkflow(w))
+      set({ workflows, loading: false })
+    } catch (e: any) {
+      set({ error: e.message || "Failed to fetch workflows", loading: false })
     }
-    set((state) => ({
-      workflows: [newWorkflow, ...state.workflows],
-      activeWorkflowId: id
-    }))
-    return id
+  },
+
+  addWorkflow: async (details: ProductDetails, imageFiles?: File[]) => {
+    set({ loading: true, error: null })
+    try {
+      // 1. Create workflow first to get an ID
+      const res = await workflowApi.initiateWorkflow({
+        title: details.title,
+        raw_description: details.rawDescription,
+        category: details.category,
+        target_audience: details.targetAudience,
+        price: details.price,
+        sku: details.sku,
+        images: []
+      })
+
+      const workflowId = res.workflow?.id || res.id
+      const uploadedUrls: string[] = []
+
+      // 2. Upload image files to backend
+      if (imageFiles && imageFiles.length > 0) {
+        for (const file of imageFiles) {
+          try {
+            const uploadRes = await workflowApi.uploadImage(workflowId, file)
+            uploadedUrls.push(uploadRes.image_url)
+          } catch (uploadErr) {
+            console.warn("Image upload failed, skipping:", uploadErr)
+          }
+        }
+      }
+
+      // 3. If no uploads succeeded, use a placeholder
+      if (uploadedUrls.length === 0) {
+        uploadedUrls.push(
+          "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80"
+        )
+      }
+
+      // 4. Build local workflow object
+      const newWorkflow: LaunchWorkflow = {
+        id: workflowId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        state: "UPLOADED",
+        productDetails: { ...details, images: uploadedUrls }
+      }
+
+      set((s) => ({
+        workflows: [newWorkflow, ...s.workflows],
+        activeWorkflowId: workflowId,
+        loading: false
+      }))
+
+      return workflowId
+    } catch (e: any) {
+      set({ error: e.message || "Failed to create workflow", loading: false })
+      throw e
+    }
   },
 
   deleteWorkflow: (id: string) => {
-    set((state) => ({
-      workflows: state.workflows.filter((w) => w.id !== id),
-      activeWorkflowId: state.activeWorkflowId === id ? null : state.activeWorkflowId
+    set((s) => ({
+      workflows: s.workflows.filter((w) => w.id !== id),
+      activeWorkflowId: s.activeWorkflowId === id ? null : s.activeWorkflowId
     }))
   },
 
   updateWorkflowState: (id: string, state: WorkflowState) => {
-    set((stateStore) => ({
-      workflows: stateStore.workflows.map((w) =>
-        w.id === id
-          ? { ...w, state, updatedAt: new Date().toISOString() }
-          : w
+    set((s) => ({
+      workflows: s.workflows.map((w) =>
+        w.id === id ? { ...w, state, updatedAt: new Date().toISOString() } : w
+      )
+    }))
+  },
+
+  updateWorkflowData: (id: string, data: Partial<LaunchWorkflow>) => {
+    set((s) => ({
+      workflows: s.workflows.map((w) =>
+        w.id === id ? { ...w, ...data, updatedAt: new Date().toISOString() } : w
       )
     }))
   },
 
   runAIPipeline: async (id: string) => {
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-    
-    // Helper to edit active workflow nested structures
-    const updateWorkflowData = (data: Partial<LaunchWorkflow>) => {
-      set((stateStore) => ({
-        workflows: stateStore.workflows.map((w) =>
-          w.id === id
-            ? { ...w, ...data, updatedAt: new Date().toISOString() }
-            : w
-        )
+    set({ loading: true, error: null })
+    const steps: Array<{ state: WorkflowState; api: () => Promise<any> }> = [
+      { state: "ANALYZING",          api: () => workflowApi.analyzeImage(id) },
+      { state: "GENERATING_DESC",    api: () => workflowApi.generateDescription(id) },
+      { state: "GENERATING_MKTG",    api: () => workflowApi.generateMarketing(id) },
+      { state: "GENERATING_PROMPTS", api: () => workflowApi.generatePrompts(id) },
+      { state: "VALIDATING",         api: () => workflowApi.validateContent(id) },
+    ]
+
+    try {
+      for (const step of steps) {
+        get().updateWorkflowState(id, step.state)
+        const res = await step.api()
+        if (res?.workflow) {
+          const mapped = mapApiToWorkflow(res.workflow)
+          get().updateWorkflowData(id, mapped)
+        }
+      }
+
+      // Final fetch to get fully populated workflow
+      const finalRes = await workflowApi.getWorkflow(id)
+      const mapped = mapApiToWorkflow(finalRes.workflow || finalRes)
+      set((s) => ({
+        workflows: s.workflows.map((w) => w.id === id ? { ...mapped, state: "VALIDATED" } : w),
+        loading: false
       }))
+    } catch (e: any) {
+      set({ error: e.message || "AI pipeline failed", loading: false })
+      get().updateWorkflowState(id, "FAILED")
     }
-
-    const workflow = get().workflows.find((w) => w.id === id)
-    if (!workflow) return
-
-    // Stage 1: Image Analysis
-    get().updateWorkflowState(id, "ANALYZING")
-    await sleep(1500)
-    updateWorkflowData({
-      state: "ANALYZED",
-      imageAnalysis: {
-        productType: `Fashion / ${workflow.productDetails.category}`,
-        features: ["Premium stitch", "Comfort fit", "Durable wash"],
-        suggestedColors: ["Charcoal", "Emerald", "Teal"],
-        materials: ["100% Organic Eco Fibers"],
-        styleKeywords: ["Modern", "Urban", "Premium"],
-        rawSummary: `The AI visual engine inspected ${workflow.productDetails.title} and detected dynamic organic lines, custom stitching details, and optimized color balances.`
-      }
-    })
-
-    // Stage 2: Description Generation
-    get().updateWorkflowState(id, "GENERATING_DESC")
-    await sleep(1800)
-    const active = get().workflows.find((w) => w.id === id)!
-    updateWorkflowData({
-      state: "DESC_GENERATED",
-      generatedDescription: {
-        title: `AI-Enhanced ${active.productDetails.title}`,
-        descriptionHtml: `<p>Introducing the <strong>${active.productDetails.title}</strong>, curated for premium aesthetics. Designed with focus on organic materials, durability, and standard modern tailoring.</p><p><em>Details: ${active.productDetails.rawDescription}</em></p>`,
-        seoTitle: `${active.productDetails.title} | Premium ${active.productDetails.category}`,
-        seoDescription: `Get the outstanding ${active.productDetails.title}. Shop ${active.productDetails.category} responsibly designed for comfort and modern lifestyles.`,
-        tags: [active.productDetails.category.toLowerCase(), "eco-conscious", "premium-grade"]
-      }
-    })
-
-    // Stage 3: Marketing Copy
-    get().updateWorkflowState(id, "GENERATING_MKTG")
-    await sleep(1500)
-    const active2 = get().workflows.find((w) => w.id === id)!
-    updateWorkflowData({
-      state: "MKTG_GENERATED",
-      marketingContent: {
-        socialCopy: {
-          instagram: `Elevate your aesthetics with ${active2.productDetails.title} ✨ Responsibly sourced. Tap link in bio.`,
-          facebook: `Sustainable comfort has a new name. Meet the ${active2.productDetails.title}. Engineered for durability.`,
-          twitter: `Style shouldn't compromise values. Discover the new ${active2.productDetails.title} today.`
-        },
-        adCopy: {
-          metaHeadline: `Shop ${active2.productDetails.title} - Free Shipping`,
-          metaBody: `Ethical, comfortable, and tailored to fit. Discover our latest collection today.`,
-          googleHeadline: `Order Premium ${active2.productDetails.title}`
-        },
-        emailNewsletter: `Subject: Introducing ${active2.productDetails.title}\n\nHi Family,\n\nWe just dropped a brand new item...`
-      }
-    })
-
-    // Stage 4: Prompts Generation
-    get().updateWorkflowState(id, "GENERATING_PROMPTS")
-    await sleep(1200)
-    const active3 = get().workflows.find((w) => w.id === id)!
-    updateWorkflowData({
-      state: "PROMPTS_GENERATED",
-      imagePrompts: {
-        lifestylePrompts: [
-          `Model showcasing ${active3.productDetails.title} in a high-end chic loft apartment, architectural digest interior, golden hour lighting`
-        ],
-        studioPrompts: [
-          `Clean studio packaging flat lay, natural wood blocks, organic cotton threads next to ${active3.productDetails.title}`
-        ]
-      }
-    })
-
-    // Stage 5: Content Validation
-    get().updateWorkflowState(id, "VALIDATING")
-    await sleep(1500)
-    updateWorkflowData({
-      state: "VALIDATED",
-      validation: {
-        isValid: true,
-        policyCheckPassed: true,
-        suggestions: [
-          "Include organic care tags in physical items.",
-          "Add size chart link near checkout."
-        ],
-        logs: [
-          "Spelling checks completed: 0 issues.",
-          "Brand compliance verified: Matches friendly tone.",
-          "Shopify terms of service verification: Compliant."
-        ]
-      }
-    })
   },
 
-  submitReview: (id: string, isApproved: boolean, notes: string) => {
-    set((stateStore) => ({
-      workflows: stateStore.workflows.map((w) =>
-        w.id === id
-          ? {
-              ...w,
-              state: isApproved ? "APPROVED" : "REJECTED",
-              feedbackNotes: notes,
-              updatedAt: new Date().toISOString()
-            }
-          : w
-      )
-    }))
+  submitReview: async (id: string, isApproved: boolean, notes: string) => {
+    set({ loading: true, error: null })
+    try {
+      const res = await workflowApi.submitReview(id, {
+        review_notes: notes,
+        is_approved: isApproved,
+        reviewer: get().user.username || "Admin"
+      })
+
+      const newState: WorkflowState = isApproved ? "APPROVED" : "REJECTED"
+      set((s) => ({
+        workflows: s.workflows.map((w) =>
+          w.id === id ? { ...w, state: newState, feedbackNotes: notes, updatedAt: new Date().toISOString() } : w
+        ),
+        loading: false
+      }))
+    } catch (e: any) {
+      set({ error: e.message || "Review submission failed", loading: false })
+    }
   },
 
-  publishToShopify: async (id: string) => {
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-    
-    get().updateWorkflowState(id, "PUBLISHING")
-    await sleep(2000)
-
-    const workflow = get().workflows.find((w) => w.id === id)!
-    const shopifyId = `shopify-prod-${Math.floor(1000 + Math.random() * 9000)}`
-
-    set((stateStore) => ({
-      workflows: stateStore.workflows.map((w) =>
-        w.id === id
-          ? {
-              ...w,
-              state: "VERIFYING",
-              publication: {
-                shopifyProductId: shopifyId,
-                publishedUrl: `https://${stateStore.settings.shopifyShopUrl}/products/${workflow.productDetails.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-                publishedAt: new Date().toISOString(),
-                verificationStatus: "pending"
-              },
-              updatedAt: new Date().toISOString()
-            }
-          : w
-      )
-    }))
-
-    await sleep(1500)
-
-    set((stateStore) => ({
-      workflows: stateStore.workflows.map((w) =>
-        w.id === id
-          ? {
-              ...w,
-              state: "COMPLETED",
-              publication: {
-                ...w.publication!,
-                verificationStatus: "verified"
-              },
-              updatedAt: new Date().toISOString()
-            }
-          : w
-      )
-    }))
+  publishProduct: async (id: string) => {
+    set({ loading: true, error: null })
+    try {
+      get().updateWorkflowState(id, "PUBLISHING")
+      await workflowApi.publishToShopify(id)
+      get().updateWorkflowState(id, "VERIFYING")
+      const verifyRes = await workflowApi.verifyPublication(id)
+      const mapped = mapApiToWorkflow(verifyRes.workflow || verifyRes)
+      set((s) => ({
+        workflows: s.workflows.map((w) => w.id === id ? { ...mapped, state: "COMPLETED" } : w),
+        loading: false
+      }))
+    } catch (e: any) {
+      set({ error: e.message || "Publication failed", loading: false })
+      get().updateWorkflowState(id, "FAILED")
+    }
   },
 
   updateSettings: (newSettings: Partial<PlatformSettings>) => {
-    set((stateStore) => ({
-      settings: { ...stateStore.settings, ...newSettings }
-    }))
+    set((s) => ({ settings: { ...s.settings, ...newSettings } }))
   }
 }))

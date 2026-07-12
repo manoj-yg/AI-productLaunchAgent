@@ -18,16 +18,21 @@ class Settings(BaseSettings):
     VERSION: str = Field(default="1.0.0")
 
     # CORS Configuration
-    CORS_ORIGINS: List[str] = Field(default=[])
+    CORS_ORIGINS: Union[List[str], str] = Field(default=[])
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if v_stripped.startswith("[") and v_stripped.endswith("]"):
+                import json
+                try:
+                    return json.loads(v_stripped)
+                except Exception:
+                    pass
+            return [i.strip() for i in v_stripped.split(",")]
+        return v
 
     # Firebase Settings
     FIREBASE_PROJECT_ID: str = Field(default="placeholder-project-id")
@@ -44,16 +49,26 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = Field(default="gemini-2.5-flash")
 
     # MCP (Model Context Protocol) URL Configuration
-    MCP_SERVER_URLS: List[str] = Field(default=[])
+    MCP_SERVER_URLS: Union[List[str], str] = Field(default=[])
 
     @field_validator("MCP_SERVER_URLS", mode="before")
     @classmethod
     def assemble_mcp_urls(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if v_stripped.startswith("[") and v_stripped.endswith("]"):
+                import json
+                try:
+                    return json.loads(v_stripped)
+                except Exception:
+                    pass
+            return [i.strip() for i in v_stripped.split(",")]
+        return v
 
 
 settings = Settings()
+
+# ── Local file upload directory ───────────────────────────────────────────────
+# Resolved to: backend/uploads/ (sibling of the app/ package directory)
+UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)

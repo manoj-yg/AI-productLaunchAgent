@@ -9,3 +9,8 @@ def test_client():
     app = create_app()
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture
+def anyio_backend():
+    return 'asyncio'

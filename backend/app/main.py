@@ -1,8 +1,10 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+from fastapi.staticfiles import StaticFiles
+from app.core.config import settings, UPLOADS_DIR
 from app.core.logging import setup_logging
 from app.core.exceptions import register_exception_handlers
 from app.core.middleware import RequestLoggingMiddleware
@@ -50,14 +52,19 @@ def create_app() -> FastAPI:
     )
 
     # 1. CORS Middleware
-    if settings.CORS_ORIGINS:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    cors_origins = [str(origin) for origin in settings.CORS_ORIGINS]
+    # Always allow local dev ports
+    for port in ["5173", "5174", "5175", "3000"]:
+        local = f"http://localhost:{port}"
+        if local not in cors_origins:
+            cors_origins.append(local)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # 2. Request Logging Middleware
     app.add_middleware(RequestLoggingMiddleware)
@@ -67,6 +74,10 @@ def create_app() -> FastAPI:
 
     # 4. Routing register
     app.include_router(api_router, prefix="/api/v1")
+
+    # 5. Serve uploaded product images as static files
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
     logger.info("FastAPI Application factory setup completed successfully.")
     return app

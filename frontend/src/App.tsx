@@ -46,10 +46,10 @@ function MainLayout() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans">
+    <div className="flex min-h-screen bg-slate-50 text-slate-800 font-sans">
       
-      {/* Dynamic Glassmorphic Sidebar */}
-      <aside className="w-64 border-r border-slate-900 bg-slate-950/80 backdrop-blur-md p-6 flex flex-col justify-between relative">
+      {/* Dynamic Light Sidebar */}
+      <aside className="w-64 border-r border-slate-100 bg-white p-6 flex flex-col justify-between relative shadow-sm">
         <div className="space-y-8">
           
           {/* Logo */}
@@ -57,8 +57,8 @@ function MainLayout() {
             <div className="p-2 bg-primary/10 rounded-xl">
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-extrabold text-lg bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-              Launch AI
+            <span className="font-extrabold text-lg bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              KiddyPi Launcher
             </span>
           </Link>
 
@@ -74,10 +74,10 @@ function MainLayout() {
                   className={`flex items-center space-x-3 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 ${
                     isActive
                       ? "bg-primary text-white shadow-md shadow-primary/15"
-                      : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-100"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`} />
                   <span>{item.label}</span>
                 </Link>
               )
@@ -86,16 +86,16 @@ function MainLayout() {
         </div>
 
         {/* User profile bottom details */}
-        <div className="border-t border-slate-900 pt-4 space-y-4">
-          <div className="flex items-center space-x-3 bg-slate-950/40 p-2.5 rounded-xl border border-slate-900/60">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-xs">
+        <div className="border-t border-slate-100 pt-4 space-y-4">
+          <div className="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
               {user.username ? user.username.charAt(0) : "A"}
             </div>
             <div className="overflow-hidden">
-              <span className="font-semibold text-xs text-slate-200 block truncate leading-tight">
+              <span className="font-semibold text-xs text-slate-800 block truncate leading-tight">
                 {user.username || "Alex Staff"}
               </span>
-              <span className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider block mt-0.5">
+              <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider block mt-0.5">
                 {user.role}
               </span>
             </div>
@@ -105,7 +105,7 @@ function MainLayout() {
             variant="ghost"
             size="sm"
             onClick={logout}
-            className="w-full flex items-center justify-center space-x-2 text-xs font-semibold text-slate-400 hover:text-red-400 hover:bg-red-500/5 rounded-xl"
+            className="w-full flex items-center justify-center space-x-2 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-500/5 rounded-xl"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -114,7 +114,7 @@ function MainLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-8 overflow-y-auto bg-slate-950/20">
+      <main className="flex-1 p-8 overflow-y-auto bg-slate-50">
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />

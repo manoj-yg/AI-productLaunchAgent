@@ -40,7 +40,7 @@ export default function Settings() {
       
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-100 flex items-center gap-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
           <span>Platform Customization</span>
         </h1>
         <p className="text-sm text-slate-500 font-light">Configure shop connection channels, Gemini guidelines, and tone preferences.</p>
@@ -49,9 +49,9 @@ export default function Settings() {
       <form onSubmit={handleSave} className="space-y-6">
         
         {/* Shopify Channels Card */}
-        <Card className="glass-panel">
-          <CardHeader className="border-b border-slate-900 pb-3">
-            <CardTitle className="text-sm flex items-center space-x-2">
+        <Card className="bg-white border border-slate-100 shadow-sm">
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="text-sm flex items-center space-x-2 text-slate-900">
               <Link className="w-4 h-4 text-primary" />
               <span>Shopify Channel Setup</span>
             </CardTitle>
@@ -60,19 +60,20 @@ export default function Settings() {
           <CardContent className="pt-6 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Shopify Admin URL</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Shopify Admin URL</label>
                 <Input
                   required
                   type="text"
                   placeholder="shopname.myshopify.com"
                   value={shopifyShopUrl}
                   onChange={(e) => setShopifyShopUrl(e.target.value)}
+                  className="border-slate-200 text-slate-800"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Shopify Admin API Token</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Shopify Admin API Token</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-3 flex items-center text-slate-600">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
                     <Key className="w-4 h-4" />
                   </span>
                   <Input
@@ -81,7 +82,7 @@ export default function Settings() {
                     placeholder="shpat_********************"
                     value={shopifyAccessToken}
                     onChange={(e) => setShopifyAccessToken(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 border-slate-200 text-slate-800"
                   />
                 </div>
               </div>
@@ -90,9 +91,9 @@ export default function Settings() {
         </Card>
 
         {/* AI Prompting Guidelines */}
-        <Card className="glass-panel">
-          <CardHeader className="border-b border-slate-900 pb-3">
-            <CardTitle className="text-sm flex items-center space-x-2">
+        <Card className="bg-white border border-slate-100 shadow-sm">
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="text-sm flex items-center space-x-2 text-slate-900">
               <MessageSquare className="w-4 h-4 text-primary" />
               <span>Gemini Tone Guidelines</span>
             </CardTitle>
@@ -101,8 +102,8 @@ export default function Settings() {
           <CardContent className="pt-6 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Brand Tone of Voice</label>
-                <Select value={brandVoice} onChange={(e) => setBrandVoice(e.target.value as any)}>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Brand Tone of Voice</label>
+                <Select value={brandVoice} onChange={(e) => setBrandVoice(e.target.value as any)} className="border-slate-200 text-slate-800">
                   <option value="playful">Playful & Friendly</option>
                   <option value="professional">Professional & Informative</option>
                   <option value="bold">Bold & Creative</option>
@@ -110,8 +111,8 @@ export default function Settings() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Output Language</label>
-                <Select value={defaultLanguage} onChange={(e) => setDefaultLanguage(e.target.value)}>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Output Language</label>
+                <Select value={defaultLanguage} onChange={(e) => setDefaultLanguage(e.target.value)} className="border-slate-200 text-slate-800">
                   <option value="en">English (US)</option>
                   <option value="es">Spanish (ES)</option>
                   <option value="fr">French (FR)</option>
@@ -123,28 +124,28 @@ export default function Settings() {
         </Card>
 
         {/* Branding preferences */}
-        <Card className="glass-panel">
-          <CardHeader className="border-b border-slate-900 pb-3">
-            <CardTitle className="text-sm flex items-center space-x-2">
+        <Card className="bg-white border border-slate-100 shadow-sm">
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="text-sm flex items-center space-x-2 text-slate-900">
               <SettingsIcon className="w-4 h-4 text-primary" />
               <span>General Configuration</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Primary Branding Color Code</label>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Primary Branding Color Code</label>
               <div className="flex space-x-3 items-center">
                 <input
                   type="color"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="w-10 h-10 border border-slate-800 rounded bg-slate-950 cursor-pointer"
+                  className="w-10 h-10 border border-slate-200 rounded cursor-pointer"
                 />
                 <Input
                   type="text"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="font-mono text-xs w-32"
+                  className="font-mono text-xs w-32 border-slate-200 text-slate-800"
                 />
               </div>
             </div>
@@ -157,7 +158,7 @@ export default function Settings() {
             <motion.span
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-xs text-green-500 font-semibold"
+              className="text-xs text-green-600 font-semibold"
             >
               ✓ Configurations updated successfully
             </motion.span>

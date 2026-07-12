@@ -25,7 +25,7 @@ import { Badge } from "../components/ui/badge"
 
 export default function HumanReview() {
   const navigate = useNavigate()
-  const { workflows, activeWorkflowId, submitReview, publishToShopify } = useLaunchStore()
+  const { workflows, activeWorkflowId, submitReview, publishProduct } = useLaunchStore()
   
   // Find workflow
   const activeWorkflow = workflows.find((w) => w.id === activeWorkflowId)
@@ -79,9 +79,9 @@ export default function HumanReview() {
     
     if (approved) {
       setIsPublishing(true)
-      await publishToShopify(activeWorkflow.id)
+      await publishProduct(activeWorkflow.id)
       setIsPublishing(false)
-      navigate("/report")
+      navigate("/reports")
     } else {
       navigate("/")
     }
@@ -96,36 +96,43 @@ export default function HumanReview() {
     return (
       <div className="space-y-8 font-sans max-w-7xl mx-auto pb-12">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-100">Review Center</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Review Center</h1>
           <p className="text-sm text-slate-500 font-light font-sans">Audit generated product parameters and authorize launches.</p>
         </div>
 
-        <Card className="glass-panel text-center py-16 space-y-4">
-          <ClipboardCheck className="w-12 h-12 mx-auto text-slate-700 animate-bounce" />
-          <h3 className="text-lg font-bold text-slate-200">Select Launch Workflow to Audit</h3>
+        <Card className="bg-white border border-slate-100 shadow-sm text-center py-16 space-y-4">
+          <ClipboardCheck className="w-12 h-12 mx-auto text-primary/40" />
+          <h3 className="text-lg font-bold text-slate-800">Select a Product to Review</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Choose from the list of workflows that have completed AI validation stages.
+            Choose from the list of products that have completed the AI validation stage.
           </p>
           
           <div className="max-w-md mx-auto grid gap-3 pt-4">
             {reviewableWorkflows.length === 0 ? (
-              <p className="text-xs text-slate-600 italic">No workflows are currently awaiting audit.</p>
+              <p className="text-xs text-slate-400 italic">No products are currently awaiting review. Run the AI pipeline first.</p>
             ) : (
               reviewableWorkflows.map((w) => (
                 <button
                   key={w.id}
                   onClick={() => useLaunchStore.setState({ activeWorkflowId: w.id })}
-                  className="flex items-center justify-between p-4 border border-slate-900 bg-slate-950/45 rounded-xl hover:border-primary/45 transition-colors text-left"
+                  className="flex items-center justify-between p-4 border border-slate-200 bg-slate-50 rounded-xl hover:border-primary/30 hover:bg-blue-50/50 transition-colors text-left"
                 >
                   <div className="flex items-center space-x-3">
-                    <img
-                      src={w.productDetails.images[0]}
-                      alt=""
-                      className="w-8 h-8 rounded object-cover border border-slate-800"
-                    />
+                    {w.productDetails.images[0] ? (
+                      <img
+                        src={w.productDetails.images[0]}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover border border-slate-200"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-slate-400" />
+                      </div>
+                    )}
                     <div>
-                      <span className="font-semibold text-slate-200 text-xs sm:text-sm block leading-tight">{w.productDetails.title}</span>
-                      <span className="text-[10px] text-slate-600 font-mono">{w.id}</span>
+                      <span className="font-semibold text-slate-800 text-xs sm:text-sm block leading-tight">{w.productDetails.title}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{w.id.substring(0,12)}...</span>
                     </div>
                   </div>
                   <Badge variant="warning" className="text-[9px] uppercase">
@@ -147,10 +154,10 @@ export default function HumanReview() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <span className="text-xs font-semibold text-primary uppercase tracking-wider block">Stage 7 & 8: Human Approval</span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-100 flex items-center gap-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
             <span>Audit Workspace</span>
           </h1>
-          <p className="text-sm text-slate-500">Reviewing generated assets for <span className="font-semibold text-slate-400">{activeWorkflow.productDetails.title}</span></p>
+          <p className="text-sm text-slate-500">Reviewing generated assets for <span className="font-semibold text-slate-700">{activeWorkflow.productDetails.title}</span></p>
         </div>
         
         <Button
@@ -168,7 +175,7 @@ export default function HumanReview() {
         <div className="lg:col-span-8 space-y-6">
           
           {/* Tabs Navigation */}
-          <div className="flex space-x-1.5 border-b border-slate-900 pb-px">
+          <div className="flex space-x-1.5 border-b border-slate-200 pb-px">
             {[
               { id: "copy", label: "Catalog & Description", icon: FileText },
               { id: "marketing", label: "Marketing Campaigns", icon: Instagram },
@@ -181,7 +188,7 @@ export default function HumanReview() {
                 className={`flex items-center space-x-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors ${
                   activeTab === t.id
                     ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-300"
+                    : "border-transparent text-slate-500 hover:text-slate-700"
                 }`}
               >
                 <t.icon className="w-4 h-4" />
@@ -191,7 +198,7 @@ export default function HumanReview() {
           </div>
 
           {/* Tab contents */}
-          <Card className="glass-panel">
+          <Card className="bg-white border border-slate-100 shadow-sm">
             <CardContent className="pt-6">
               
               {/* TAB 1: CATALOG DETAILS & DESCRIPTION */}
@@ -218,30 +225,30 @@ export default function HumanReview() {
 
                   {!isEditing ? (
                     <div className="space-y-4 font-sans text-sm">
-                      <div className="grid grid-cols-3 border-b border-slate-900/60 pb-3">
+                      <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
                         <span className="text-slate-500 font-medium">Synced Title</span>
-                        <span className="col-span-2 font-bold text-slate-100">
+                        <span className="col-span-2 font-bold text-slate-800">
                           {activeWorkflow.generatedDescription?.title || activeWorkflow.productDetails.title}
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 border-b border-slate-900/60 pb-3">
+                      <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
                         <span className="text-slate-500 font-medium">Description (HTML)</span>
                         <div
-                          className="col-span-2 text-slate-300 font-light leading-relaxed prose prose-invert max-w-none text-xs sm:text-sm"
+                          className="col-span-2 text-slate-700 font-light leading-relaxed prose max-w-none text-xs sm:text-sm"
                           dangerouslySetInnerHTML={{
                             __html: activeWorkflow.generatedDescription?.descriptionHtml || activeWorkflow.productDetails.rawDescription
                           }}
                         />
                       </div>
-                      <div className="grid grid-cols-3 border-b border-slate-900/60 pb-3">
+                      <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
                         <span className="text-slate-500 font-medium">SEO Title</span>
-                        <span className="col-span-2 text-slate-300">
+                        <span className="col-span-2 text-slate-700">
                           {activeWorkflow.generatedDescription?.seoTitle || "Not generated"}
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 border-b border-slate-900/60 pb-3">
+                      <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
                         <span className="text-slate-500 font-medium">SEO Description</span>
-                        <span className="col-span-2 text-slate-400 font-light text-xs leading-relaxed">
+                        <span className="col-span-2 text-slate-600 font-light text-xs leading-relaxed">
                           {activeWorkflow.generatedDescription?.seoDescription || "Not generated"}
                         </span>
                       </div>
@@ -259,25 +266,25 @@ export default function HumanReview() {
                   ) : (
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Listing Title</label>
+                        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Listing Title</label>
                         <Input value={editedTitle} onChange={(e) => setEditedTitle(e.target.value)} />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Listing Description HTML</label>
+                        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Listing Description HTML</label>
                         <Textarea className="h-40" value={editedHtml} onChange={(e) => setEditedHtml(e.target.value)} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">SEO Page Title</label>
+                          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">SEO Page Title</label>
                           <Input value={editedSeoTitle} onChange={(e) => setEditedSeoTitle(e.target.value)} />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Product Tags (Comma separated)</label>
+                          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Product Tags (Comma separated)</label>
                           <Input value={editedTags} onChange={(e) => setEditedTags(e.target.value)} />
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">SEO Meta Description</label>
+                        <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">SEO Meta Description</label>
                         <Textarea value={editedSeoDesc} onChange={(e) => setEditedSeoDesc(e.target.value)} />
                       </div>
                     </div>
@@ -298,47 +305,47 @@ export default function HumanReview() {
                       
                       {/* Social block */}
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div className="p-4 border border-slate-900 bg-slate-950/60 rounded-xl space-y-3">
-                          <div className="flex items-center space-x-2 text-indigo-400">
+                        <div className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
+                          <div className="flex items-center space-x-2 text-indigo-600">
                             <Instagram className="w-4 h-4" />
                             <span className="text-xs font-bold uppercase tracking-wider">Instagram Post</span>
                           </div>
-                          <p className="text-xs text-slate-300 font-light leading-relaxed bg-slate-950 p-2.5 rounded border border-slate-900/60">
+                          <p className="text-xs text-slate-700 font-light leading-relaxed bg-white p-2.5 rounded border border-slate-100">
                             {activeWorkflow.marketingContent.socialCopy.instagram}
                           </p>
                         </div>
-                        <div className="p-4 border border-slate-900 bg-slate-950/60 rounded-xl space-y-3">
-                          <div className="flex items-center space-x-2 text-blue-400">
+                        <div className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
+                          <div className="flex items-center space-x-2 text-blue-600">
                             <Twitter className="w-4 h-4" />
                             <span className="text-xs font-bold uppercase tracking-wider">Twitter Ad</span>
                           </div>
-                          <p className="text-xs text-slate-300 font-light leading-relaxed bg-slate-950 p-2.5 rounded border border-slate-900/60">
+                          <p className="text-xs text-slate-700 font-light leading-relaxed bg-white p-2.5 rounded border border-slate-100">
                             {activeWorkflow.marketingContent.socialCopy.twitter}
                           </p>
                         </div>
                       </div>
 
                       {/* Google/Meta Ads block */}
-                      <div className="p-4 border border-slate-900 bg-slate-950/60 rounded-xl space-y-3">
-                        <div className="flex items-center space-x-2 text-violet-400">
+                      <div className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
+                        <div className="flex items-center space-x-2 text-violet-600">
                           <Facebook className="w-4 h-4" />
                           <span className="text-xs font-bold uppercase tracking-wider">Paid Ads Campaign Copy</span>
                         </div>
-                        <div className="space-y-2 bg-slate-950 p-3 rounded border border-slate-900/60">
-                          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Headline</span>
-                          <p className="text-xs text-slate-200 font-semibold mb-2">{activeWorkflow.marketingContent.adCopy.metaHeadline}</p>
-                          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Body Copy</span>
-                          <p className="text-xs text-slate-300 font-light leading-relaxed">{activeWorkflow.marketingContent.adCopy.metaBody}</p>
+                        <div className="space-y-2 bg-white p-3 rounded border border-slate-100">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Headline</span>
+                          <p className="text-xs text-slate-800 font-semibold mb-2">{activeWorkflow.marketingContent.adCopy.metaHeadline}</p>
+                          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Body Copy</span>
+                          <p className="text-xs text-slate-700 font-light leading-relaxed">{activeWorkflow.marketingContent.adCopy.metaBody}</p>
                         </div>
                       </div>
 
                       {/* Newsletter */}
-                      <div className="p-4 border border-slate-900 bg-slate-950/60 rounded-xl space-y-3">
-                        <div className="flex items-center space-x-2 text-teal-400">
+                      <div className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
+                        <div className="flex items-center space-x-2 text-teal-600">
                           <Mail className="w-4 h-4" />
                           <span className="text-xs font-bold uppercase tracking-wider">Email Drops Campaign</span>
                         </div>
-                        <pre className="text-[11px] text-slate-400 font-mono whitespace-pre-wrap bg-slate-950 p-3 rounded border border-slate-900/60 max-h-48 overflow-y-auto">
+                        <pre className="text-[11px] text-slate-600 font-mono whitespace-pre-wrap bg-white p-3 rounded border border-slate-100 max-h-48 overflow-y-auto">
                           {activeWorkflow.marketingContent.emailNewsletter}
                         </pre>
                       </div>
@@ -360,21 +367,21 @@ export default function HumanReview() {
 
                   {activeWorkflow.imagePrompts ? (
                     <div className="space-y-4">
-                      <div className="p-4 border border-slate-900 rounded-xl space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Lifestyle Placement Prompt</span>
+                      <div className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Lifestyle Placement Prompt</span>
                         <ul className="space-y-2">
                           {activeWorkflow.imagePrompts.lifestylePrompts.map((prm, i) => (
-                            <li key={i} className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded border border-slate-900">
+                            <li key={i} className="text-xs text-slate-700 leading-relaxed bg-white p-2.5 rounded border border-slate-100">
                               {prm}
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <div className="p-4 border border-slate-900 rounded-xl space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Studio Background Prompt</span>
+                      <div className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Studio Background Prompt</span>
                         <ul className="space-y-2">
                           {activeWorkflow.imagePrompts.studioPrompts.map((prm, i) => (
-                            <li key={i} className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded border border-slate-900">
+                            <li key={i} className="text-xs text-slate-700 leading-relaxed bg-white p-2.5 rounded border border-slate-100">
                               {prm}
                             </li>
                           ))}
@@ -409,10 +416,10 @@ export default function HumanReview() {
 
                       {/* AI recommendations */}
                       <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">AI Integration Suggestions</span>
-                        <div className="bg-slate-950/60 p-3.5 border border-slate-900 rounded-xl space-y-1 text-xs">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">AI Integration Suggestions</span>
+                        <div className="bg-slate-50 p-3.5 border border-slate-200 rounded-xl space-y-1 text-xs">
                           {activeWorkflow.validation.suggestions.map((sug, i) => (
-                            <p key={i} className="text-slate-300 leading-relaxed flex items-start space-x-2">
+                            <p key={i} className="text-slate-700 leading-relaxed flex items-start space-x-2">
                               <span className="text-primary font-bold">•</span>
                               <span>{sug}</span>
                             </p>
@@ -422,8 +429,8 @@ export default function HumanReview() {
 
                       {/* Engine Logs */}
                       <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Detailed Engine Logs</span>
-                        <div className="bg-slate-950 p-3 rounded-xl border border-slate-900 font-mono text-[10px] text-slate-500 space-y-1">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Detailed Engine Logs</span>
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 font-mono text-[10px] text-slate-500 space-y-1">
                           {activeWorkflow.validation.logs.map((log, i) => (
                             <p key={i}>[SYSTEM LOG - {new Date().toLocaleTimeString()}] {log}</p>
                           ))}
@@ -445,8 +452,8 @@ export default function HumanReview() {
         <div className="lg:col-span-4 space-y-6">
           
           {/* Vision specs card */}
-          <Card className="glass-panel">
-            <CardHeader className="border-b border-slate-900/60 pb-3">
+          <Card className="bg-white border border-slate-100 shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-3">
               <CardTitle className="text-sm flex items-center space-x-2">
                 <Layers className="w-4 h-4 text-primary" />
                 <span>Gemini Vision Metadata</span>
@@ -455,9 +462,9 @@ export default function HumanReview() {
             <CardContent className="pt-4 space-y-4 text-xs font-sans">
               
               {/* Product sample image */}
-              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden border border-slate-900 bg-slate-900 relative">
+              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden border border-slate-100 bg-slate-50 relative">
                 <img
-                  src={activeWorkflow.productDetails.images[0]}
+                  src={activeWorkflow.productDetails.images[0] || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60"}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -465,15 +472,15 @@ export default function HumanReview() {
 
               {activeWorkflow.imageAnalysis ? (
                 <div className="space-y-3.5">
-                  <div className="flex justify-between border-b border-slate-900/40 pb-2">
+                  <div className="flex justify-between border-b border-slate-100 pb-2">
                     <span className="text-slate-500">Detected Class</span>
-                    <span className="font-bold text-slate-300">{activeWorkflow.imageAnalysis.productType}</span>
+                    <span className="font-bold text-slate-800">{activeWorkflow.imageAnalysis.productType}</span>
                   </div>
                   <div className="space-y-1.5">
                     <span className="text-slate-500 font-medium">Detected Features</span>
                     <div className="flex flex-wrap gap-1">
                       {activeWorkflow.imageAnalysis.features.map((ft, i) => (
-                        <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0">
+                        <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0 border-slate-200 text-slate-700 bg-slate-50">
                           {ft}
                         </Badge>
                       ))}
@@ -483,7 +490,7 @@ export default function HumanReview() {
                     <span className="text-slate-500 font-medium">Detected Materials</span>
                     <div className="flex flex-wrap gap-1">
                       {activeWorkflow.imageAnalysis.materials.map((m, i) => (
-                        <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0 border-blue-500/10 text-blue-400 bg-blue-500/5">
+                        <Badge key={i} variant="outline" className="text-[9px] px-1.5 py-0 border-blue-500/10 text-blue-600 bg-blue-50">
                           {m}
                         </Badge>
                       ))}
@@ -491,7 +498,7 @@ export default function HumanReview() {
                   </div>
                   <div className="space-y-1">
                     <span className="text-slate-500 font-medium block">Vision Parsing Summary</span>
-                    <p className="text-[11px] text-slate-400 leading-relaxed font-light">
+                    <p className="text-[11px] text-slate-600 leading-relaxed font-light">
                       {activeWorkflow.imageAnalysis.rawSummary}
                     </p>
                   </div>
@@ -504,7 +511,7 @@ export default function HumanReview() {
           </Card>
 
           {/* Action verification card */}
-          <Card className="glass-panel border-primary/20 relative overflow-hidden">
+          <Card className="bg-white border border-slate-100 shadow-sm border-t-2 border-t-primary relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-blue-500 to-indigo-500" />
             
             <CardHeader className="pb-3">
@@ -513,16 +520,16 @@ export default function HumanReview() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Approval Feedback Notes</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Approval Feedback Notes</label>
                 <Textarea
                   placeholder="Mention changes made, notes for layout editor, etc."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="h-20"
+                  className="h-20 border-slate-200 text-slate-800"
                 />
               </div>
 
-              <div className="flex flex-col space-y-2 pt-2 border-t border-slate-900">
+              <div className="flex flex-col space-y-2 pt-2 border-t border-slate-100">
                 <Button
                   variant="glow"
                   onClick={() => handleReviewSubmission(true)}
@@ -536,7 +543,7 @@ export default function HumanReview() {
                   variant="destructive"
                   onClick={() => handleReviewSubmission(false)}
                   disabled={isPublishing}
-                  className="w-full flex items-center justify-center space-x-1.5 bg-slate-900 border border-slate-800 text-red-400 hover:bg-slate-900/80 shadow-none"
+                  className="w-full flex items-center justify-center space-x-1.5 bg-slate-50 border border-slate-200 text-red-600 hover:bg-slate-100 shadow-none"
                 >
                   <XCircle className="w-4 h-4" />
                   <span>Reject Launch</span>

@@ -49,13 +49,13 @@ export default function Reports() {
     <div className="space-y-8 font-sans max-w-7xl mx-auto pb-12">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-900 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6">
         <div>
           <span className="text-xs font-semibold text-primary uppercase tracking-wider block">Stage 11: Workflow Report</span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-100 flex items-center gap-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
             <span>Launch Audit Summary</span>
           </h1>
-          <p className="text-sm text-slate-500">Report details for <span className="font-semibold text-slate-400">{selectedWorkflow.productDetails.title}</span></p>
+          <p className="text-sm text-slate-500">Report details for <span className="font-semibold text-slate-700">{selectedWorkflow.productDetails.title}</span></p>
         </div>
 
         <div className="flex space-x-2">
@@ -76,8 +76,8 @@ export default function Reports() {
         <div className="lg:col-span-8 space-y-6">
           
           {/* Main Info Card */}
-          <Card className="glass-panel">
-            <CardHeader className="border-b border-slate-900 pb-4">
+          <Card className="bg-white border border-slate-100 shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-4">
               <div className="flex justify-between items-center">
                 <CardTitle>Lifecycle Execution Log</CardTitle>
                 <Badge variant="success" className="font-semibold text-[9px] uppercase tracking-wider">
@@ -87,35 +87,35 @@ export default function Reports() {
             </CardHeader>
             <CardContent className="pt-6 space-y-6 text-sm">
               <div className="grid gap-6 sm:grid-cols-3">
-                <div className="p-4 border border-slate-900/60 bg-slate-950/20 rounded-xl space-y-1">
+                <div className="p-4 border border-slate-100 bg-slate-50 rounded-xl space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-primary" />
                     <span>Launch Date</span>
                   </span>
-                  <p className="font-bold text-slate-200">{new Date(selectedWorkflow.createdAt).toLocaleDateString()}</p>
+                  <p className="font-bold text-slate-800">{new Date(selectedWorkflow.createdAt).toLocaleDateString()}</p>
                   <p className="text-[10px] text-slate-500">{new Date(selectedWorkflow.createdAt).toLocaleTimeString()}</p>
                 </div>
-                <div className="p-4 border border-slate-900/60 bg-slate-950/20 rounded-xl space-y-1">
+                <div className="p-4 border border-slate-100 bg-slate-50 rounded-xl space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                    <Clock className="w-3.5 h-3.5 text-indigo-600" />
                     <span>Total Runtime</span>
                   </span>
-                  <p className="font-bold text-slate-200">8.5 seconds</p>
+                  <p className="font-bold text-slate-800">8.5 seconds</p>
                   <p className="text-[10px] text-slate-500">Pipeline latency standard</p>
                 </div>
-                <div className="p-4 border border-slate-900/60 bg-slate-950/20 rounded-xl space-y-1">
+                <div className="p-4 border border-slate-100 bg-slate-50 rounded-xl space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider flex items-center gap-1">
-                    <ShoppingBag className="w-3.5 h-3.5 text-teal-400" />
+                    <ShoppingBag className="w-3.5 h-3.5 text-teal-600" />
                     <span>Shopify SKU</span>
                   </span>
-                  <p className="font-bold text-slate-200 font-mono text-xs">{selectedWorkflow.productDetails.sku}</p>
+                  <p className="font-bold text-slate-800 font-mono text-xs">{selectedWorkflow.productDetails.sku}</p>
                   <p className="text-[10px] text-slate-500">Inventory ID mapped</p>
                 </div>
               </div>
 
               {/* Step Audit timeline */}
-              <div className="space-y-4 pt-4 border-t border-slate-900">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Orchestrator Execution Audit Trails</span>
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Orchestrator Execution Audit Trails</span>
                 
                 <div className="space-y-3 font-sans text-xs">
                   {[
@@ -128,13 +128,13 @@ export default function Reports() {
                     { title: "Stage 7 & 8: Human validation submission & approval log.", status: "Approved", duration: "Instant" },
                     { title: "Stage 9 & 10: Shopify product creation & live link verification.", status: "Success", duration: "3.5s" }
                   ].map((step, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-3 border border-slate-900 bg-slate-950/40 rounded-xl">
+                    <div key={idx} className="flex justify-between items-center p-3 border border-slate-100 bg-slate-50 rounded-xl">
                       <div className="flex items-center space-x-2.5">
                         <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <span className="text-slate-300 font-medium">{step.title}</span>
+                        <span className="text-slate-800 font-medium">{step.title}</span>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <span className="text-slate-600 font-mono text-[10px]">{step.duration}</span>
+                        <span className="text-slate-500 font-mono text-[10px]">{step.duration}</span>
                         <Badge variant="success" className="text-[9px] uppercase font-semibold px-2 py-0">
                           {step.status}
                         </Badge>
@@ -153,27 +153,27 @@ export default function Reports() {
         <div className="lg:col-span-4 space-y-6">
           
           {/* Mapped Listings */}
-          <Card className="glass-panel">
-            <CardHeader className="border-b border-slate-900 pb-3">
+          <Card className="bg-white border border-slate-100 shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-3">
               <CardTitle className="text-sm">Verified Shopify Mappings</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4 text-xs font-sans">
-              <div className="flex justify-between border-b border-slate-900/60 pb-2">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500">Shopify Product ID</span>
-                <span className="font-bold text-slate-300 font-mono">
+                <span className="font-bold text-slate-800 font-mono">
                   {selectedWorkflow.publication?.shopifyProductId || "shopify-prod-1234"}
                 </span>
               </div>
-              <div className="flex justify-between border-b border-slate-900/60 pb-2">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500">Publication Status</span>
-                <span className="font-bold text-green-400 uppercase tracking-wide flex items-center space-x-1">
+                <span className="font-bold text-green-600 uppercase tracking-wide flex items-center space-x-1">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>Verified</span>
                 </span>
               </div>
-              <div className="flex justify-between border-b border-slate-900/60 pb-2">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500 font-medium">Published Date</span>
-                <span className="font-bold text-slate-300">
+                <span className="font-bold text-slate-800">
                   {selectedWorkflow.publication?.publishedAt ? new Date(selectedWorkflow.publication.publishedAt).toLocaleDateString() : new Date().toLocaleDateString()}
                 </span>
               </div>
@@ -184,7 +184,7 @@ export default function Reports() {
                     href={selectedWorkflow.publication.publishedUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full flex items-center justify-center space-x-1.5 p-2 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-900/80 transition-colors text-primary font-bold"
+                    className="w-full flex items-center justify-center space-x-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors text-primary font-bold"
                   >
                     <span>View Shopify Page</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -195,15 +195,15 @@ export default function Reports() {
           </Card>
 
           {/* Simple Vector Graph Card for visual analytics mock */}
-          <Card className="glass-panel">
-            <CardHeader className="pb-3 border-b border-slate-900">
+          <Card className="bg-white border border-slate-100 shadow-sm">
+            <CardHeader className="pb-3 border-b border-slate-100">
               <CardTitle className="text-sm flex items-center space-x-2">
                 <TrendingUp className="w-4 h-4 text-primary animate-pulse" />
                 <span>Storefront Views Analytics</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
-              <div className="h-32 w-full rounded-xl bg-slate-950 border border-slate-900 relative overflow-hidden flex items-end p-2">
+              <div className="h-32 w-full rounded-xl bg-slate-50 border border-slate-100 relative overflow-hidden flex items-end p-2">
                 
                 {/* Simulated Graph SVG */}
                 <svg className="w-full h-full" viewBox="0 0 100 50">
