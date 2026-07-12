@@ -63,9 +63,26 @@ class MarketingAgent(BaseAgent):
                     hashtags=["KiddyPi", "STEMforKids", "Robotics", "CodingCamp", "SubhanuTech"]
                 )
 
+            from app.domain.entities import MarketingContent as DomainMarketingContent
+            domain_mktg = DomainMarketingContent(
+                social_copy={
+                    "instagram": mktg_result.instagram_caption,
+                    "facebook": mktg_result.facebook_post,
+                    "linkedin": mktg_result.linkedin_post,
+                    "twitter": mktg_result.twitter_x_post,
+                    "whatsapp": mktg_result.whatsapp_promotion
+                },
+                ad_copy={
+                    "metaHeadline": mktg_result.promotional_headline,
+                    "metaBody": mktg_result.banner_text,
+                    "googleHeadline": mktg_result.cta
+                },
+                email_newsletter=mktg_result.email_campaign
+            )
+
             # Merge marketing state back to Firestore using Firebase MCP client
             update_payload = {
-                "marketing_content": mktg_result.model_dump(),
+                "marketing_content": domain_mktg.model_dump(),
                 "updated_at": canonical_context.updated_at
             }
             await self.firebase_mcp.save_workflow(workflow_id, update_payload)

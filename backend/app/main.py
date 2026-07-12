@@ -26,6 +26,19 @@ async def lifespan(app: FastAPI):
     # 1. Initialize Firebase Admin SDK connection
     FirebaseManager.initialize()
     
+    # Seeding KiddyPi products in Firestore
+    if FirebaseManager.db is not None:
+        try:
+            col_ref = FirebaseManager.db.collection("sample_products")
+            docs = col_ref.limit(1).get()
+            if not docs:
+                from app.agents.recommendation.agent import SEED_PRODUCTS
+                for p in SEED_PRODUCTS:
+                    col_ref.document(p["product_id"]).set(p)
+                logger.info("Successfully seeded 20 KiddyPi sample products in Firestore.")
+        except Exception as e:
+            logger.error(f"Failed to seed sample products in Firestore: {str(e)}")
+
     # 2. Activate Shopify API session configurations
     ShopifySessionManager.activate()
     

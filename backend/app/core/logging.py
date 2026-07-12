@@ -12,12 +12,17 @@ def setup_logging(log_level: str = "INFO", environment: str = "production") -> N
         "standard": {
             "format": "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d): %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S"
-        },
-        "json": {
+        }
+    }
+
+    try:
+        import pythonjsonlogger.jsonlogger
+        formatters["json"] = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "format": "%(asctime)s %(levelname)s %(name)s %(message)s"
         }
-    }
+    except ImportError:
+        pass
 
     # Use JSON formatter in production containerized runtimes for parsing engines (e.g. Cloud Logging)
     formatter_selection = "standard" if environment == "development" else "standard" # fallback to standard if jsonlogger not installed

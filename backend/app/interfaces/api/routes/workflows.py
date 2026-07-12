@@ -76,6 +76,44 @@ async def upload_product_image(
     return {"workflow_id": workflow_id, "image_url": image_url, "filename": unique_name}
 
 
+@router.post("/{workflow_id}/orchestrate")
+async def orchestrate_workflow(
+    workflow_id: str
+):
+    """
+    Triggers the multi-stage AI agent launch pipeline for an existing product.
+    Runs Vision -> Description -> Feature -> Marketing -> Image Prompts -> Image Gen -> Recommendations -> Validation.
+    """
+    from app.agents.workflow.orchestrator import LaunchWorkflowAgent
+    try:
+        orchestrator = LaunchWorkflowAgent()
+        result = await orchestrator.execute_workflow_on_existing(workflow_id)
+        if result["status"] == "failed":
+            raise HTTPException(
+                status_code=400,
+                detail={"message": "Multi-agent pipeline failed to complete.", "errors": result.get("errors", [])}
+            )
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+@router.delete("/{workflow_id}")
+async def delete_workflow(
+    workflow_id: str,
+    use_case: LaunchWorkflowUseCase = Depends(get_launch_workflow_use_case)
+):
+    """
+    Deletes a workflow by its unique ID.
+    """
+    try:
+        await use_case.workflow_repo.delete_workflow(workflow_id)
+        return {"status": "success", "message": f"Workflow {workflow_id} deleted."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 @router.post("/{workflow_id}/analyze", response_model=WorkflowResponse)
 async def analyze_image(
     workflow_id: str,
@@ -181,6 +219,8 @@ async def submit_human_review(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -198,6 +238,8 @@ async def publish_to_shopify(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -215,6 +257,8 @@ async def verify_publication(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -232,6 +276,8 @@ async def get_workflow_report(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -248,4 +294,6 @@ async def list_workflows(
         workflows = await use_case.workflow_repo.list_workflows(limit=limit, offset=offset)
         return WorkflowListResponse(workflows=workflows)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

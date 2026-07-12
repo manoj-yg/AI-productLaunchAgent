@@ -35,9 +35,9 @@ class Settings(BaseSettings):
         return v
 
     # Firebase Settings
-    FIREBASE_PROJECT_ID: str = Field(default="placeholder-project-id")
-    FIREBASE_STORAGE_BUCKET: str = Field(default="placeholder-storage-bucket")
-    GOOGLE_APPLICATION_CREDENTIALS: str = Field(default="config/firebase-service-account.json")
+    FIREBASE_PROJECT_ID: str = Field(default="")
+    FIREBASE_STORAGE_BUCKET: str = Field(default="")
+    GOOGLE_APPLICATION_CREDENTIALS: str = Field(default="app/config/firebase-admin.json")
 
     # Shopify Integration Settings
     SHOPIFY_SHOP_URL: str = Field(default="placeholder-shop.myshopify.com")
@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     SHOPIFY_API_VERSION: str = Field(default="2024-04")
 
     # AI Configurations
-    GEMINI_API_KEY: str = Field(default="AIzaSyPlaceholder")
-    GEMINI_MODEL: str = Field(default="gemini-2.5-flash")
+    GEMINI_API_KEY: str = Field(default="GEMINI_API_KEY")
+    GEMINI_MODEL: str = Field(default="gemini-2.0-flash")
 
     # MCP (Model Context Protocol) URL Configuration
     MCP_SERVER_URLS: Union[List[str], str] = Field(default=[])

@@ -22,6 +22,7 @@ import Products from "./pages/Products"
 import HumanReview from "./pages/HumanReview"
 import Reports from "./pages/Reports"
 import SettingsPage from "./pages/Settings"
+import DemoStore from "./pages/DemoStore"
 
 // Protected Route Guard
 function ProtectedRoute({ children }: { children: JSX.Element }) {
@@ -42,7 +43,8 @@ function MainLayout() {
     { to: "/products", label: "Inventory Products", icon: ShoppingBag },
     { to: "/review", label: "Review Center", icon: CheckSquare },
     { to: "/reports", label: "Audit Reports", icon: FileText },
-    { to: "/settings", label: "Custom Settings", icon: Settings }
+    { to: "/settings", label: "Custom Settings", icon: Settings },
+    { to: "/store", label: "Demo Store", icon: ExternalLink }
   ]
 
   return (
@@ -134,6 +136,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/store" element={<DemoStore />} />
         
         {/* Protected Dashboard Wrapper routes */}
         <Route

@@ -90,3 +90,18 @@ class FirestoreWorkflowRepository(WorkflowRepository):
             for v in list(self._mock_db.values())[offset : offset + limit]:
                 results.append(LaunchWorkflow.model_validate(v))
             return results
+
+    async def delete_workflow(self, workflow_id: str) -> None:
+        """
+        Deletes a workflow document from Firestore (or mock DB).
+        """
+        if self.db:
+            try:
+                self.db.collection(self.collection_name).document(workflow_id).delete()
+                logger.info(f"Workflow '{workflow_id}' deleted from Firestore.")
+            except Exception as e:
+                logger.error(f"Failed to delete workflow from Firestore: {str(e)}")
+                raise e
+        else:
+            if workflow_id in self._mock_db:
+                del self._mock_db[workflow_id]

@@ -73,6 +73,14 @@ export const workflowApi = {
   },
 
   /**
+   * Triggers the multi-stage AI agent launch pipeline in one go on an existing workflow.
+   */
+  orchestrateWorkflow: async (workflowId: string) => {
+    const res = await api.post(`/workflows/${workflowId}/orchestrate`)
+    return res.data
+  },
+
+  /**
    * Fetches an active workflow status / report document by ID.
    */
   getWorkflow: async (workflowId: string) => {
@@ -149,6 +157,14 @@ export const workflowApi = {
    */
   listWorkflows: async (limit: number = 30, offset: number = 0) => {
     const res = await api.get("/workflows", { params: { limit, offset } })
+    return res.data
+  },
+
+  /**
+   * Deletes a workflow document from database.
+   */
+  deleteWorkflow: async (workflowId: string) => {
+    const res = await api.delete(`/workflows/${workflowId}`)
     return res.data
   },
 }

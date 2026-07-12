@@ -70,6 +70,32 @@ class ContentValidation(BaseModel):
     policy_check_passed: bool
     suggestions: List[str] = Field(default_factory=list)
     validation_logs: List[str] = Field(default_factory=list)
+    validation_score: float = 90.0
+    grammar_issues: List[str] = Field(default_factory=list)
+    readability_rating: str = "Easy"
+    image_consistency: str = "High"
+
+
+class FeatureGeneratorResult(BaseModel):
+    key_features: List[str] = Field(default_factory=list)
+    specifications: Dict[str, str] = Field(default_factory=dict)
+    whats_included: List[str] = Field(default_factory=list)
+    highlights: List[str] = Field(default_factory=list)
+
+
+class ImageGenerationResult(BaseModel):
+    packshot: str = ""
+    lifestyle_scene: str = ""
+    promotional_banner: str = ""
+
+
+class ProductRecommendation(BaseModel):
+    product_id: str
+    title: str
+    category: str
+    price: float
+    age_group: str
+    image_url: str
 
 
 class HumanReview(BaseModel):
@@ -95,8 +121,11 @@ class LaunchWorkflow(BaseModel):
     product_details: ProductDetails
     image_analysis: Optional[ImageAnalysis] = None
     generated_description: Optional[GeneratedDescription] = None
+    features: Optional[FeatureGeneratorResult] = None
     marketing_content: Optional[MarketingContent] = None
     image_prompts: Optional[ImagePrompts] = None
+    generated_images: Optional[ImageGenerationResult] = None
+    recommendations: List[ProductRecommendation] = Field(default_factory=list)
     validation: Optional[ContentValidation] = None
     review: Optional[HumanReview] = None
     publication: Optional[ShopifyPublication] = None

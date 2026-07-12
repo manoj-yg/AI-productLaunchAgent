@@ -28,6 +28,11 @@ class WorkflowRepository(ABC):
         """Lists recent workflows."""
         pass
 
+    @abstractmethod
+    async def delete_workflow(self, workflow_id: str) -> None:
+        """Deletes a workflow by its unique ID."""
+        pass
+
 
 class StorageRepository(ABC):
     @abstractmethod

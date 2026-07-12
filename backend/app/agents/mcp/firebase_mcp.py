@@ -16,7 +16,7 @@ class FirebaseMCPClient:
 
     def __init__(self):
         self.db = get_firestore_client()
-        self.workflow_collection = "products"  # single document structure in products collection
+        self.workflow_collection = "workflows"  # single document structure in workflows collection
         self.logs_collection = "workflow_logs"
         self.reports_collection = "reports"
 

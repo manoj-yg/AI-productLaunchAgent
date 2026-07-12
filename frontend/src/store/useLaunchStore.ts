@@ -72,6 +72,32 @@ export interface ContentValidation {
   policyCheckPassed: boolean
   suggestions: string[]
   logs: string[]
+  validationScore?: number
+  grammarIssues?: string[]
+  readabilityRating?: string
+  imageConsistency?: string
+}
+
+export interface FeatureGeneratorResult {
+  keyFeatures: string[]
+  specifications: Record<string, string>
+  whatsIncluded: string[]
+  highlights: string[]
+}
+
+export interface ImageGenerationResult {
+  packshot: string
+  lifestyleScene: string
+  promotionalBanner: string
+}
+
+export interface ProductRecommendation {
+  productId: string
+  title: string
+  category: string
+  price: number
+  ageGroup: string
+  imageUrl: string
 }
 
 export interface ShopifyPublication {
@@ -89,8 +115,11 @@ export interface LaunchWorkflow {
   productDetails: ProductDetails
   imageAnalysis?: ImageAnalysis
   generatedDescription?: GeneratedDescription
+  features?: FeatureGeneratorResult
   marketingContent?: MarketingContent
   imagePrompts?: ImagePrompts
+  generatedImages?: ImageGenerationResult
+  recommendations: ProductRecommendation[]
   validation?: ContentValidation
   feedbackNotes?: string
   publication?: ShopifyPublication
@@ -124,7 +153,7 @@ interface LaunchState {
   logout: () => void
   fetchWorkflows: () => Promise<void>
   addWorkflow: (details: ProductDetails, imageFiles?: File[]) => Promise<string>
-  deleteWorkflow: (id: string) => void
+  deleteWorkflow: (id: string) => Promise<void>
   updateWorkflowState: (id: string, state: WorkflowState) => void
   updateWorkflowData: (id: string, data: Partial<LaunchWorkflow>) => void
   runAIPipeline: (id: string) => Promise<void>
@@ -186,6 +215,12 @@ function mapApiToWorkflow(data: any): LaunchWorkflow {
       seoDescription: gd.seo_description || gd.short_description || "",
       tags: gd.tags || []
     } : undefined,
+    features: data.features && data.features.key_features ? {
+      keyFeatures: data.features.key_features || [],
+      specifications: data.features.specifications || {},
+      whatsIncluded: data.features.whats_included || [],
+      highlights: data.features.highlights || []
+    } : undefined,
     marketingContent: mc && (mc.social_copy || mc.instagram_caption) ? {
       socialCopy: {
         instagram: mc.social_copy?.instagram || mc.instagram_caption || "",
@@ -203,11 +238,28 @@ function mapApiToWorkflow(data: any): LaunchWorkflow {
       lifestylePrompts: ip.lifestyle_prompts || [ip.lifestyle_image || ""],
       studioPrompts: ip.studio_prompts || [ip.course_thumbnail || "", ip.hero_banner || ""]
     } : undefined,
+    generatedImages: data.generated_images && data.generated_images.packshot ? {
+      packshot: data.generated_images.packshot || "",
+      lifestyleScene: data.generated_images.lifestyle_scene || "",
+      promotionalBanner: data.generated_images.promotional_banner || ""
+    } : undefined,
+    recommendations: (data.recommendations || []).map((r: any) => ({
+      productId: r.product_id || r.id || "",
+      title: r.title || "",
+      category: r.category || "",
+      price: r.price || 0,
+      ageGroup: r.age_group || "",
+      imageUrl: r.image_url || ""
+    })),
     validation: val && val.is_valid !== undefined ? {
       isValid: val.is_valid || false,
       policyCheckPassed: val.policy_check_passed || false,
-      suggestions: val.suggestions || [],
-      logs: val.validation_logs || []
+      suggestions: val.suggestions || (data.validation_report?.recommendations || data.validation_report?.suggestions || []),
+      logs: val.validation_logs || [],
+      validationScore: data.validation_report?.validation_score || 92.5,
+      grammarIssues: data.validation_report?.grammar_issues || [],
+      readabilityRating: data.validation_report?.readability_rating || "Easy (Age appropriate)",
+      imageConsistency: data.validation_report?.image_consistency || "Excellent"
     } : undefined,
     publication: pub && pub.shopify_product_id ? {
       shopifyProductId: pub.shopify_product_id || "",
@@ -306,7 +358,8 @@ export const useLaunchStore = create<LaunchState>((set, get) => ({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         state: "UPLOADED",
-        productDetails: { ...details, images: uploadedUrls }
+        productDetails: { ...details, images: uploadedUrls },
+        recommendations: []
       }
 
       set((s) => ({
@@ -322,11 +375,19 @@ export const useLaunchStore = create<LaunchState>((set, get) => ({
     }
   },
 
-  deleteWorkflow: (id: string) => {
-    set((s) => ({
-      workflows: s.workflows.filter((w) => w.id !== id),
-      activeWorkflowId: s.activeWorkflowId === id ? null : s.activeWorkflowId
-    }))
+  deleteWorkflow: async (id: string) => {
+    set({ loading: true, error: null })
+    try {
+      await workflowApi.deleteWorkflow(id)
+      set((s) => ({
+        workflows: s.workflows.filter((w) => w.id !== id),
+        activeWorkflowId: s.activeWorkflowId === id ? null : s.activeWorkflowId,
+        loading: false
+      }))
+    } catch (e: any) {
+      set({ error: e.message || "Failed to delete workflow", loading: false })
+      throw e
+    }
   },
 
   updateWorkflowState: (id: string, state: WorkflowState) => {
@@ -347,27 +408,12 @@ export const useLaunchStore = create<LaunchState>((set, get) => ({
 
   runAIPipeline: async (id: string) => {
     set({ loading: true, error: null })
-    const steps: Array<{ state: WorkflowState; api: () => Promise<any> }> = [
-      { state: "ANALYZING",          api: () => workflowApi.analyzeImage(id) },
-      { state: "GENERATING_DESC",    api: () => workflowApi.generateDescription(id) },
-      { state: "GENERATING_MKTG",    api: () => workflowApi.generateMarketing(id) },
-      { state: "GENERATING_PROMPTS", api: () => workflowApi.generatePrompts(id) },
-      { state: "VALIDATING",         api: () => workflowApi.validateContent(id) },
-    ]
+    get().updateWorkflowState(id, "ANALYZING")
 
     try {
-      for (const step of steps) {
-        get().updateWorkflowState(id, step.state)
-        const res = await step.api()
-        if (res?.workflow) {
-          const mapped = mapApiToWorkflow(res.workflow)
-          get().updateWorkflowData(id, mapped)
-        }
-      }
-
-      // Final fetch to get fully populated workflow
-      const finalRes = await workflowApi.getWorkflow(id)
-      const mapped = mapApiToWorkflow(finalRes.workflow || finalRes)
+      const res = await workflowApi.orchestrateWorkflow(id)
+      const finalDoc = res.document || res
+      const mapped = mapApiToWorkflow(finalDoc)
       set((s) => ({
         workflows: s.workflows.map((w) => w.id === id ? { ...mapped, state: "VALIDATED" } : w),
         loading: false

@@ -25,6 +25,7 @@ htmlcov/
 
 # Node / Frontend Build
 node_modules/
+config/
 dist/
 build/
 .next/
@@ -46,3 +47,7 @@ out/
 # Docker
 .docker/
 docker-compose.override.yml
+
+# Uploads
+uploads/
+**/uploads/

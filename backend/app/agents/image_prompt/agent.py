@@ -59,9 +59,24 @@ class ImagePromptAgent(BaseAgent):
                     social_media_ads=f"Modern, conversion-focused split grid creative featuring the KiddyPi microcontroller module, clean bright studio composition, high-end tech styling."
                 )
 
+            from app.domain.entities import ImagePrompts as DomainImagePrompts
+            domain_prompts = DomainImagePrompts(
+                lifestyle_prompts=[
+                    prompts_result.lifestyle_image,
+                    prompts_result.hero_banner
+                ],
+                studio_prompts=[
+                    prompts_result.course_thumbnail,
+                    prompts_result.website_banner,
+                    prompts_result.instagram_creative,
+                    prompts_result.poster,
+                    prompts_result.social_media_ads
+                ]
+            )
+
             # Merge prompts state back to Firestore using Firebase MCP client
             update_payload = {
-                "image_prompts": prompts_result.model_dump(),
+                "image_prompts": domain_prompts.model_dump(),
                 "updated_at": canonical_context.updated_at
             }
             await self.firebase_mcp.save_workflow(workflow_id, update_payload)

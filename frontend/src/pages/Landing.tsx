@@ -33,20 +33,20 @@ export default function Landing() {
             <Sparkles className="w-6 h-6 text-primary" />
           </div>
           <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            KiddyPi Launcher
+            KiddyPi Launch Studio
           </span>
         </div>
         <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
           <a href="#pipeline" className="hover:text-slate-900 transition-colors">How it Works</a>
-          <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
-          <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
+          <Link to="/store" className="hover:text-slate-900 transition-colors">Demo Store</Link>
+          <Link to="/dashboard" className="hover:text-slate-900 transition-colors">Admin Dashboard</Link>
         </nav>
         <div className="flex items-center space-x-4">
-          <Link to="/login">
-            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100/50">Sign In</Button>
+          <Link to="/store">
+            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100/50">View Store</Button>
           </Link>
-          <Link to="/login">
-            <Button variant="glow" size="sm" className="hidden sm:inline-flex">Get Started</Button>
+          <Link to="/dashboard">
+            <Button variant="glow" size="sm" className="hidden sm:inline-flex">Admin Studio</Button>
           </Link>
         </div>
       </header>
@@ -90,17 +90,17 @@ export default function Landing() {
           transition={{ delay: 0.3, duration: 0.6 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
         >
-          <Link to="/login">
+          <Link to="/dashboard">
             <Button variant="glow" size="lg" className="w-full sm:w-auto flex items-center space-x-2">
-              <span>Start Free Trial</span>
+              <span>Open Admin Studio</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-          <a href="#pipeline">
+          <Link to="/store">
             <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900">
-              Watch Demo
+              Browse Demo Store
             </Button>
-          </a>
+          </Link>
         </motion.div>
       </section>
 

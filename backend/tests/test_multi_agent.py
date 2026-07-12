@@ -39,8 +39,11 @@ async def test_full_launch_workflow_agent_orchestration():
     assert "canonical_context" in doc
     assert "image_analysis" in doc
     assert "generated_description" in doc
+    assert "features" in doc
     assert "marketing_content" in doc
     assert "image_prompts" in doc
+    assert "generated_images" in doc
+    assert "recommendations" in doc
     assert "validation_report" in doc
     assert "workflow_logs" in doc
     
@@ -52,7 +55,7 @@ async def test_full_launch_workflow_agent_orchestration():
     assert "arduino" in ctx["tags"]
     
     # Check vision and validation report data
-    assert doc["image_analysis"]["confidence_score"] > 0
+    assert len(doc["image_analysis"]["product_type"]) > 0
     assert doc["validation_report"]["validation_score"] >= 90.0
     
     # Confirm workflow execution logs appended

@@ -64,9 +64,18 @@ class DescriptionAgent(BaseAgent):
                     specifications={"Compatibility": "Windows/Mac/iPad", "Battery Requirements": "None"}
                 )
 
+            from app.domain.entities import GeneratedDescription as DomainGeneratedDescription
+            domain_desc = DomainGeneratedDescription(
+                title=desc_result.product_title,
+                description_html=desc_result.long_description,
+                seo_title=desc_result.product_title,
+                seo_description=desc_result.short_description,
+                tags=desc_result.key_features + desc_result.learning_outcomes
+            )
+
             # Merge description state back to Firestore using Firebase MCP client
             update_payload = {
-                "generated_description": desc_result.model_dump(),
+                "generated_description": domain_desc.model_dump(),
                 "updated_at": canonical_context.updated_at
             }
             await self.firebase_mcp.save_workflow(workflow_id, update_payload)

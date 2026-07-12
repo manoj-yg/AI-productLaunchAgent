@@ -115,9 +115,19 @@ class ImageAnalysisAgent(BaseAgent):
                     confidence_score=0.92
                 )
 
+            from app.domain.entities import ImageAnalysis as DomainImageAnalysis
+            domain_analysis = DomainImageAnalysis(
+                product_type=analysis_result.product_type,
+                detected_features=analysis_result.features,
+                suggested_colors=analysis_result.colors,
+                materials=analysis_result.materials,
+                style_keywords=[analysis_result.style] if isinstance(analysis_result.style, str) else analysis_result.style,
+                raw_analysis=analysis_result.summary
+            )
+
             # Save results back to Firestore / mock DB
             update_payload = {
-                "image_analysis": analysis_result.model_dump(),
+                "image_analysis": domain_analysis.model_dump(),
                 "updated_at": canonical_context.updated_at
             }
             await self.firebase_mcp.save_workflow(workflow_id, update_payload)

@@ -68,10 +68,10 @@ export default function Dashboard() {
   useEffect(() => { fetchWorkflows() }, [])
 
   // Statistics
-  const totalLaunches = workflows.length
-  const completedLaunches = workflows.filter((w) => w.state === "COMPLETED").length
-  const inProgressLaunches = workflows.filter((w) => isPipelineRunning(w.state)).length
-  const reviewRequired = workflows.filter((w) => w.state === "VALIDATED").length
+  const totalProducts = workflows.length
+  const publishedProducts = workflows.filter((w) => w.state === "COMPLETED" || w.state === "PUBLISHED").length
+  const draftProducts = workflows.filter((w) => w.state === "UPLOADED" || w.state === "FAILED").length
+  const pendingReview = workflows.filter((w) => w.state === "VALIDATED").length
 
   // Filtered workflows
   const filteredWorkflows = workflows.filter((w) =>
@@ -166,10 +166,10 @@ export default function Dashboard() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Products", value: totalLaunches, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Completed", value: completedLaunches, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
-          { label: "AI Processing", value: inProgressLaunches, icon: Sparkles, color: "text-violet-600", bg: "bg-violet-50" },
-          { label: "Needs Review", value: reviewRequired, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Total Products", value: totalProducts, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Published Products", value: publishedProducts, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Draft Products", value: draftProducts, icon: FileText, color: "text-slate-600", bg: "bg-slate-50" },
+          { label: "Pending Review", value: pendingReview, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50" },
         ].map((kpi) => (
           <Card key={kpi.label} className="bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-5 pb-4">
