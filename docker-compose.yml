@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-launch-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      # Avoid overwriting container's installed packages with host files
+      - /app/.venv
+      - /app/__pycache__
+    environment:
+      - ENVIRONMENT=development
+      - PORT=8000
+      - BACKEND_HOST=0.0.0.0
+      - CORS_ORIGINS=http://localhost:5173
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/config/firebase-service-account.json
+    env_file:
+      - .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-launch-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    env_file:
+      - .env
+    command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - backend
+    restart: unless-stopped

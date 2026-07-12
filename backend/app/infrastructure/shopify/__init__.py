@@ -1,0 +1,1 @@
+# Shopify adapter subpackage

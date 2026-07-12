@@ -1,0 +1,48 @@
+# System Files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Environment Files
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# Python Virtual Environments & Cache
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Frontend Build
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+out/
+.cache/
+.parcel-cache/
+.eslintcache
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Docker
+.docker/
+docker-compose.override.yml
