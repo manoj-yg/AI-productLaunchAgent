@@ -154,45 +154,53 @@ class ImageGenerationAgent(BaseAgent):
         start_time = self.log_start(workflow_id)
 
         try:
-            # 1. Retrieve vision analysis details for fine-tuning image generation prompts
-            workflow_data = await self.firebase_mcp.get_workflow(workflow_id) or {}
-            image_analysis = workflow_data.get("image_analysis", {})
+            # 1. Check if user has uploaded actual images
+            if canonical_context.uploaded_images:
+                # User uploaded an actual image - perform dynamic angle transformations on it directly
+                original_url = canonical_context.uploaded_images[0]
+                packshot_url = await transform_and_save_image(original_url, angle=0, aspect_ratio=4/3, suffix="packshot")
+                lifestyle_url = await transform_and_save_image(original_url, angle=15, aspect_ratio=4/3, suffix="lifestyle")
+                banner_url = await transform_and_save_image(original_url, angle=-10, aspect_ratio=21/9, suffix="banner")
+            else:
+                # No image uploaded - retrieve vision details and generate custom AI images using prompts
+                workflow_data = await self.firebase_mcp.get_workflow(workflow_id) or {}
+                image_analysis = workflow_data.get("image_analysis", {})
 
-            # Extract specific visual elements
-            img_type = image_analysis.get("product_type") or canonical_context.category
-            img_features = ", ".join(image_analysis.get("detected_features") or image_analysis.get("features") or [])
-            img_colors = ", ".join(image_analysis.get("suggested_colors") or image_analysis.get("colors") or ["vibrant"])
-            img_materials = ", ".join(image_analysis.get("materials") or ["safe educational kit components"])
-            img_style = ", ".join(image_analysis.get("style_keywords") or [image_analysis.get("style") or "educational"])
+                # Extract specific visual elements
+                img_type = image_analysis.get("product_type") or canonical_context.category
+                img_features = ", ".join(image_analysis.get("detected_features") or image_analysis.get("features") or [])
+                img_colors = ", ".join(image_analysis.get("suggested_colors") or image_analysis.get("colors") or ["vibrant"])
+                img_materials = ", ".join(image_analysis.get("materials") or ["safe educational kit components"])
+                img_style = ", ".join(image_analysis.get("style_keywords") or [image_analysis.get("style") or "educational"])
 
-            # 2. Build detailed prompts representing the product visual characteristics
-            import urllib.parse
-            prompt_packshot = (
-                f"Professional clean product packshot of {canonical_context.product_name}, "
-                f"educational kit {img_type}, containing: {img_features or 'educational items'}. "
-                f"Made of {img_materials}. Brand colors: {img_colors}. Style: {img_style}. "
-                f"Clean studio background, sharp focus, high-end photography"
-            )
-            prompt_lifestyle = (
-                f"A child learning and playing happily with {canonical_context.product_name} robotics kit, "
-                f"showing hands-on assembly, {img_colors} elements, "
-                f"educational {img_style} design. Bright, cozy classroom/home setting, photography"
-            )
-            prompt_banner = (
-                f"Creative marketing banner for {canonical_context.product_name} educational STEM course, "
-                f"displaying microcontrollers, electronic circuit boards, coding screen, and abstract blue-purple tech graphics, "
-                f"educational style"
-            )
+                # Build detailed prompts representing the product visual characteristics
+                import urllib.parse
+                prompt_packshot = (
+                    f"Professional clean product packshot of {canonical_context.product_name}, "
+                    f"educational kit {img_type}, containing: {img_features or 'educational items'}. "
+                    f"Made of {img_materials}. Brand colors: {img_colors}. Style: {img_style}. "
+                    f"Clean studio background, sharp focus, high-end photography"
+                )
+                prompt_lifestyle = (
+                    f"A child learning and playing happily with {canonical_context.product_name} robotics kit, "
+                    f"showing hands-on assembly, {img_colors} elements, "
+                    f"educational {img_style} design. Bright, cozy classroom/home setting, photography"
+                )
+                prompt_banner = (
+                    f"Creative marketing banner for {canonical_context.product_name} educational STEM course, "
+                    f"displaying microcontrollers, electronic circuit boards, coding screen, and abstract blue-purple tech graphics, "
+                    f"educational style"
+                )
 
-            # Encode prompts for Pollinations AI
-            url_packshot = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_packshot)}?width=800&height=600&nologo=true&private=true"
-            url_lifestyle = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_lifestyle)}?width=800&height=600&nologo=true&private=true"
-            url_banner = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_banner)}?width=1200&height=514&nologo=true&private=true"
+                # Encode prompts for Pollinations AI
+                url_packshot = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_packshot)}?width=800&height=600&nologo=true&private=true"
+                url_lifestyle = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_lifestyle)}?width=800&height=600&nologo=true&private=true"
+                url_banner = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_banner)}?width=1200&height=514&nologo=true&private=true"
 
-            # 3. Download the generated custom images and rotate at different angles (0, 15, -10 degrees)
-            packshot_url = await transform_and_save_image(url_packshot, angle=0, aspect_ratio=4/3, suffix="packshot")
-            lifestyle_url = await transform_and_save_image(url_lifestyle, angle=15, aspect_ratio=4/3, suffix="lifestyle")
-            banner_url = await transform_and_save_image(url_banner, angle=-10, aspect_ratio=21/9, suffix="banner")
+                # Download the generated custom images and rotate at different angles (0, 15, -10 degrees)
+                packshot_url = await transform_and_save_image(url_packshot, angle=0, aspect_ratio=4/3, suffix="packshot")
+                lifestyle_url = await transform_and_save_image(url_lifestyle, angle=15, aspect_ratio=4/3, suffix="lifestyle")
+                banner_url = await transform_and_save_image(url_banner, angle=-10, aspect_ratio=21/9, suffix="banner")
             
             images_result = ImageGenerationResult(
                 packshot=packshot_url,
