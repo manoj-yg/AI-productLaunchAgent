@@ -28,6 +28,6 @@ COPY backend/ .
 # Copy frontend static build from Stage 1 into /app/frontend/dist
 COPY --from=frontend-builder /app/dist /app/frontend/dist
 
-EXPOSE 8080
+EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
