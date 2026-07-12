@@ -42,7 +42,10 @@ class FirestoreWorkflowRepository(WorkflowRepository):
                 doc = doc_ref.get()
                 if not doc.exists:
                     return None
-                return LaunchWorkflow.model_validate(doc.to_dict())
+                data = doc.to_dict()
+                if "id" not in data:
+                    data["id"] = doc.id
+                return LaunchWorkflow.model_validate(data)
             except Exception as e:
                 logger.error(f"Failed to get workflow from Firestore: {str(e)}")
                 raise e
@@ -81,7 +84,16 @@ class FirestoreWorkflowRepository(WorkflowRepository):
                     .offset(offset)
                     .stream()
                 )
-                return [LaunchWorkflow.model_validate(doc.to_dict()) for doc in docs]
+                results = []
+                for doc in docs:
+                    try:
+                        data = doc.to_dict()
+                        if "id" not in data:
+                            data["id"] = doc.id
+                        results.append(LaunchWorkflow.model_validate(data))
+                    except Exception as val_err:
+                        logger.warning(f"Skipping invalid/legacy workflow document '{doc.id}': {val_err}")
+                return results
             except Exception as e:
                 logger.error(f"Failed to list workflows from Firestore: {str(e)}")
                 raise e

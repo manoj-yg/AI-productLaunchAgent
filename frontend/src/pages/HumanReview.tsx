@@ -20,7 +20,9 @@ import {
   ChevronRight,
   TrendingUp,
   Sliders,
-  DollarSign
+  DollarSign,
+  Copy,
+  Terminal
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useLaunchStore, LaunchWorkflow } from "../store/useLaunchStore"
@@ -58,6 +60,15 @@ export default function HumanReview() {
   // Review status
   const [notes, setNotes] = useState("")
   const [isPublishing, setIsPublishing] = useState(false)
+
+  // Copy state
+  const [copiedCommand, setCopiedCommand] = useState<"api" | "test" | null>(null)
+
+  const handleCopyCommand = (type: "api" | "test", commandText: string) => {
+    navigator.clipboard.writeText(commandText)
+    setCopiedCommand(type)
+    setTimeout(() => setCopiedCommand(null), 2000)
+  }
 
   const handleOpenEdit = () => {
     if (!activeWorkflow) return
@@ -646,6 +657,108 @@ export default function HumanReview() {
                             </div>
                           ))
                         )}
+                      </div>
+                    </div>
+
+                    {/* Validation Execution & Verification Commands */}
+                    <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-6">
+                      <span className="text-[10px] font-bold text-slate-450 uppercase tracking-widest block">How We Validate the Product</span>
+                      
+                      <div className="bg-slate-900 text-slate-200 rounded-2xl p-5 font-mono text-xs space-y-4 shadow-inner relative overflow-hidden border border-slate-800">
+                        <div className="absolute top-0 right-0 p-3 bg-slate-950/40 border-l border-b border-slate-800 rounded-bl-xl flex items-center gap-1.5 text-slate-455 text-[10px] font-sans">
+                          <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Validation Workspace</span>
+                        </div>
+
+                        <div className="pr-24">
+                          <h4 className="text-slate-100 font-bold text-sm font-sans flex items-center gap-1.5 mb-1.5">
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            <span>AI Content Compliance Auditor Protocol</span>
+                          </h4>
+                          <p className="text-slate-400 font-sans text-[11px] leading-relaxed">
+                            Under the hood, the <strong className="text-slate-350 font-semibold">Validation Agent</strong> compiles the complete generated context and runs a multi-criteria audit to enforce guidelines before publication.
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800 space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5 font-sans text-[11px]">
+                              <span className="text-blue-400 font-bold"># 1. API Verification Command (curl)</span>
+                              <span className="text-slate-500">// Trigger automated Stage 6 safety & consistency check via endpoint</span>
+                            </div>
+                            <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 gap-3">
+                              <span className="text-emerald-400 truncate select-all">
+                                curl -X POST http://localhost:8000/api/v1/workflows/{activeWorkflow.id}/validate
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleCopyCommand("api", `curl -X POST http://localhost:8000/api/v1/workflows/${activeWorkflow.id}/validate`)}
+                                className="h-7 text-xs px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg flex items-center gap-1 font-sans border border-slate-750"
+                              >
+                                {copiedCommand === "api" ? (
+                                  <>
+                                    <CheckCircle className="w-3 h-3 text-green-400 animate-pulse" />
+                                    <span className="text-green-400">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5 font-sans text-[11px]">
+                              <span className="text-blue-400 font-bold"># 2. Automated Pipeline Test Run (pytest)</span>
+                              <span className="text-slate-500">// Run pytest validation checks on ingestion & copywriting outputs</span>
+                            </div>
+                            <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 gap-3">
+                              <span className="text-emerald-400 truncate select-all">
+                                pytest backend/tests/test_multi_agent.py
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleCopyCommand("test", "pytest backend/tests/test_multi_agent.py")}
+                                className="h-7 text-xs px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg flex items-center gap-1 font-sans border border-slate-750"
+                              >
+                                {copiedCommand === "test" ? (
+                                  <>
+                                    <CheckCircle className="w-3 h-3 text-green-400 animate-pulse" />
+                                    <span className="text-green-400">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-slate-400 space-y-1.5 pt-3 border-t border-slate-800 text-[11px] font-sans">
+                          <p className="font-bold text-slate-300 text-xs">Validation Standards Enforced:</p>
+                          <ul className="grid gap-2 sm:grid-cols-3">
+                            <li className="p-3 bg-slate-950/50 rounded-xl border border-slate-800/60">
+                              <strong className="text-slate-200 block mb-1">Vision Coherence</strong>
+                              Diffusion image prompt keywords are audited directly against physical tags parsed in Stage 2 (Gemini Vision).
+                            </li>
+                            <li className="p-3 bg-slate-950/50 rounded-xl border border-slate-800/60">
+                              <strong className="text-slate-200 block mb-1">Grammar & Readability</strong>
+                              Tone guidelines are checked dynamically. Readability rating evaluates target demographic age-appropriateness ({activeWorkflow.validation?.readabilityRating || "appropriate text structure"}).
+                            </li>
+                            <li className="p-3 bg-slate-950/50 rounded-xl border border-slate-800/60">
+                              <strong className="text-slate-200 block mb-1">Brand Compliance</strong>
+                              Ensures generated content satisfies brand voices, does not include banned competitor terms, and contains all needed outcomes.
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
 

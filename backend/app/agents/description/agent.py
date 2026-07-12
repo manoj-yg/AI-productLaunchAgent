@@ -33,13 +33,27 @@ class DescriptionAgent(BaseAgent):
             workflow_data = await self.firebase_mcp.get_workflow(workflow_id) or {}
             image_analysis = workflow_data.get("image_analysis", {})
 
+            # Extract visual attributes for description fine-tuning
+            img_summary = image_analysis.get("raw_analysis") or image_analysis.get("summary") or "None"
+            img_type = image_analysis.get("product_type") or "None"
+            img_features = ", ".join(image_analysis.get("detected_features") or image_analysis.get("features") or [])
+            img_colors = ", ".join(image_analysis.get("suggested_colors") or image_analysis.get("colors") or [])
+            img_materials = ", ".join(image_analysis.get("materials") or [])
+            img_style = ", ".join(image_analysis.get("style_keywords") or [image_analysis.get("style") or ""])
+
             prompt = (
                 f"Product: {canonical_context.product_name}\n"
                 f"Category: {canonical_context.category}\n"
                 f"Demographic: {canonical_context.age_group}\n"
                 f"Difficulty: {canonical_context.difficulty}\n"
                 f"Learning outcomes: {canonical_context.learning_outcomes}\n"
-                f"Image analysis summary: {image_analysis.get('summary', 'None')}"
+                f"--- Image Analysis Data ---\n"
+                f"Visual product type: {img_type}\n"
+                f"Visual features: {img_features or 'None'}\n"
+                f"Colors: {img_colors or 'None'}\n"
+                f"Materials: {img_materials or 'None'}\n"
+                f"Style/Branding keywords: {img_style or 'None'}\n"
+                f"Vision analysis summary: {img_summary}\n"
             )
 
             # Generate structured copy via Gemini MCP client

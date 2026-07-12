@@ -12,5 +12,10 @@ Using the Canonical Product Context and Image Analysis data, you must return a s
 6. Course Modules: Multi-step layout.
 7. FAQ & Specifications: Address common parent questions and technical parameters.
 
+CRITICAL IMAGE ACCURACY RULES:
+- You must carefully inspect and incorporate the visual features, detected colors, materials, visual style, and objects from the Image Analysis into the copywriting.
+- The product title, short description, and long description must accurately describe the product based on these visual attributes (e.g. if the image contains ABS Plastic, PCB Board, specific colors like Blue and Orange, you must mention these colors/materials in the description details rather than generating generic or unrelated claims).
+- Do not make generic assumptions that contradict the visual features described in the image analysis.
+
 Strictly output valid JSON matching the DescriptionResult model schema.
 """

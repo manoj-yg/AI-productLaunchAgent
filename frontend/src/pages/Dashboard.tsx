@@ -352,6 +352,18 @@ export default function Dashboard() {
                             </Button>
                           )}
 
+                          {!["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC"].includes(wf.state) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs px-3 border-slate-200 bg-blue-50/50 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                              onClick={() => { useLaunchStore.getState().activeWorkflowId = wf.id; navigate("/reports") }}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Report
+                            </Button>
+                          )}
+
                           <Button
                             size="sm"
                             variant="outline"

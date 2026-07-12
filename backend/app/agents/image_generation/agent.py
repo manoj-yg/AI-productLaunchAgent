@@ -1,13 +1,14 @@
 import logging
 from typing import Optional
+import os
+import httpx
+from PIL import Image
 from app.agents.base.agent import BaseAgent
 from app.agents.mcp.gemini_mcp import GeminiMCPClient
 from app.agents.mcp.firebase_mcp import FirebaseMCPClient
 from app.agents.product_intake.schemas import CanonicalProductContext
 from app.agents.image_generation.schemas import ImageGenerationResult, ImageGenerationResponse
-
-import os
-from PIL import Image
+from app.core.config import UPLOADS_DIR
 
 logger = logging.getLogger("app.agents.image_generation.agent")
 
@@ -42,22 +43,58 @@ FALLBACK_IMAGES = {
 }
 
 
-def transform_and_save_image(original_rel_url: str, angle: float, aspect_ratio: float, suffix: str) -> str:
+async def ensure_local_image(image_url: str) -> Optional[str]:
     """
-    Loads original image from local uploads directory, rotates it by `angle`,
-    crops it to `aspect_ratio` (width / height), and saves it with `suffix`.
-    Returns the new relative URL.
+    Ensures the image exists locally in UPLOADS_DIR.
+    If it's a remote URL, downloads it and saves it.
+    Returns the local filename or None if download fails.
+    """
+    if not image_url:
+        return None
+        
+    filename = os.path.basename(image_url.split("?")[0])
+    # Ensure it has an extension
+    if not os.path.splitext(filename)[1]:
+        filename += ".jpg"
+        
+    local_path = os.path.join(UPLOADS_DIR, filename)
+    if os.path.exists(local_path):
+        return filename
+        
+    try:
+        # If it is a relative url or local host url, resolve it
+        if "localhost" in image_url and "/uploads/" in image_url:
+            return os.path.basename(image_url.split("/uploads/")[-1])
+        if image_url.startswith("/uploads/"):
+            return os.path.basename(image_url)
+            
+        logger.info(f"Downloading remote image for transformation: {image_url}")
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(image_url)
+            if resp.status_code == 200:
+                with open(local_path, "wb") as f:
+                    f.write(resp.content)
+                return filename
+    except Exception as e:
+        logger.warning(f"Could not download remote image {image_url}: {e}")
+        
+    return None
+
+
+async def transform_and_save_image(original_url: str, angle: float, aspect_ratio: float, suffix: str) -> str:
+    """
+    Ensures image is local, rotates it by `angle`, crops it to `aspect_ratio` (width / height),
+    and saves it with `suffix`. Returns the absolute local URL.
     """
     try:
-        # Resolve file path
-        filename = os.path.basename(original_rel_url)
-        uploads_dir = os.path.abspath("uploads")
-        if not os.path.exists(uploads_dir):
-            os.makedirs(uploads_dir)
+        # Check if local or download if remote
+        local_filename = await ensure_local_image(original_url)
+        if not local_filename:
+            return original_url
             
-        orig_path = os.path.join(uploads_dir, filename)
+        orig_path = os.path.join(UPLOADS_DIR, local_filename)
         if not os.path.exists(orig_path):
-            return original_rel_url
+            return original_url
 
         # Open image
         img = Image.open(orig_path)
@@ -87,15 +124,15 @@ def transform_and_save_image(original_rel_url: str, angle: float, aspect_ratio: 
         img_cropped = img.crop((left, top, right, bottom))
 
         # Save to new file
-        base, ext = os.path.splitext(filename)
+        base, ext = os.path.splitext(local_filename)
         new_filename = f"{base}_{suffix}{ext}"
-        new_path = os.path.join(uploads_dir, new_filename)
+        new_path = os.path.join(UPLOADS_DIR, new_filename)
         img_cropped.save(new_path)
         
-        return f"/uploads/{new_filename}"
+        return f"http://localhost:8000/uploads/{new_filename}"
     except Exception as e:
         logger.error(f"Failed to transform image: {str(e)}")
-        return original_rel_url
+        return original_url
 
 
 class ImageGenerationAgent(BaseAgent):
@@ -117,33 +154,51 @@ class ImageGenerationAgent(BaseAgent):
         start_time = self.log_start(workflow_id)
 
         try:
-            # Generate dynamic variants from user uploaded image if available
-            if canonical_context.uploaded_images:
-                original_url = canonical_context.uploaded_images[0]
-                packshot_url = transform_and_save_image(original_url, angle=0, aspect_ratio=4/3, suffix="packshot")
-                lifestyle_url = transform_and_save_image(original_url, angle=8, aspect_ratio=4/3, suffix="lifestyle")
-                banner_url = transform_and_save_image(original_url, angle=-5, aspect_ratio=21/9, suffix="banner")
-                
-                images_result = ImageGenerationResult(
-                    packshot=packshot_url,
-                    lifestyle_scene=lifestyle_url,
-                    promotional_banner=banner_url
-                )
-            else:
-                # Map category name to lower case keys
-                category_lower = canonical_context.category.lower()
-                selected_images = FALLBACK_IMAGES
+            # 1. Retrieve vision analysis details for fine-tuning image generation prompts
+            workflow_data = await self.firebase_mcp.get_workflow(workflow_id) or {}
+            image_analysis = workflow_data.get("image_analysis", {})
 
-                for key, val in CATEGORY_IMAGES.items():
-                    if key in category_lower:
-                        selected_images = val
-                        break
+            # Extract specific visual elements
+            img_type = image_analysis.get("product_type") or canonical_context.category
+            img_features = ", ".join(image_analysis.get("detected_features") or image_analysis.get("features") or [])
+            img_colors = ", ".join(image_analysis.get("suggested_colors") or image_analysis.get("colors") or ["vibrant"])
+            img_materials = ", ".join(image_analysis.get("materials") or ["safe educational kit components"])
+            img_style = ", ".join(image_analysis.get("style_keywords") or [image_analysis.get("style") or "educational"])
 
-                images_result = ImageGenerationResult(
-                    packshot=selected_images["packshot"],
-                    lifestyle_scene=selected_images["lifestyle_scene"],
-                    promotional_banner=selected_images["promotional_banner"]
-                )
+            # 2. Build detailed prompts representing the product visual characteristics
+            import urllib.parse
+            prompt_packshot = (
+                f"Professional clean product packshot of {canonical_context.product_name}, "
+                f"educational kit {img_type}, containing: {img_features or 'educational items'}. "
+                f"Made of {img_materials}. Brand colors: {img_colors}. Style: {img_style}. "
+                f"Clean studio background, sharp focus, high-end photography"
+            )
+            prompt_lifestyle = (
+                f"A child learning and playing happily with {canonical_context.product_name} robotics kit, "
+                f"showing hands-on assembly, {img_colors} elements, "
+                f"educational {img_style} design. Bright, cozy classroom/home setting, photography"
+            )
+            prompt_banner = (
+                f"Creative marketing banner for {canonical_context.product_name} educational STEM course, "
+                f"displaying microcontrollers, electronic circuit boards, coding screen, and abstract blue-purple tech graphics, "
+                f"educational style"
+            )
+
+            # Encode prompts for Pollinations AI
+            url_packshot = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_packshot)}?width=800&height=600&nologo=true&private=true"
+            url_lifestyle = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_lifestyle)}?width=800&height=600&nologo=true&private=true"
+            url_banner = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_banner)}?width=1200&height=514&nologo=true&private=true"
+
+            # 3. Download the generated custom images and rotate at different angles (0, 15, -10 degrees)
+            packshot_url = await transform_and_save_image(url_packshot, angle=0, aspect_ratio=4/3, suffix="packshot")
+            lifestyle_url = await transform_and_save_image(url_lifestyle, angle=15, aspect_ratio=4/3, suffix="lifestyle")
+            banner_url = await transform_and_save_image(url_banner, angle=-10, aspect_ratio=21/9, suffix="banner")
+            
+            images_result = ImageGenerationResult(
+                packshot=packshot_url,
+                lifestyle_scene=lifestyle_url,
+                promotional_banner=banner_url
+            )
 
             # Merge image prompts state back to Firestore using Firebase MCP client
             update_payload = {

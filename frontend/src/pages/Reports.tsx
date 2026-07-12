@@ -21,9 +21,11 @@ import { Badge } from "../components/ui/badge"
 export default function Reports() {
   const { workflows, activeWorkflowId } = useLaunchStore()
   
-  // Find currently active workflow report or fallback to first completed one
-  const completedWorkflows = workflows.filter((w) => w.state === "COMPLETED")
-  const defaultReport = completedWorkflows[0]
+  // Find workflows that have generated descriptions or are completed/published
+  const eligibleWorkflows = workflows.filter((w) =>
+    !["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC"].includes(w.state)
+  )
+  const defaultReport = eligibleWorkflows[0]
   const selectedWorkflow = workflows.find((w) => w.id === activeWorkflowId) || defaultReport
 
   if (!selectedWorkflow) {
@@ -119,28 +121,81 @@ export default function Reports() {
                 
                 <div className="space-y-3 font-sans text-xs">
                   {[
-                    { title: "Stage 1: Raw catalog spec analysis & upload confirmation.", status: "Success", duration: "0.2s" },
-                    { title: "Stage 2: Multimodal Gemini vision analysis for feature extraction.", status: "Success", duration: "1.5s" },
-                    { title: "Stage 3: Generative AI copywriting for product description & tags.", status: "Success", duration: "1.8s" },
-                    { title: "Stage 4: Automated copy construction for ad & email newsletters.", status: "Success", duration: "1.5s" },
-                    { title: "Stage 5: Diffusion prompt template styling blocks.", status: "Success", duration: "1.2s" },
-                    { title: "Stage 6: Policy and safety compliance evaluation checks.", status: "Success", duration: "1.5s" },
-                    { title: "Stage 7 & 8: Human validation submission & approval log.", status: "Approved", duration: "Instant" },
-                    { title: "Stage 9 & 10: Shopify product creation & live link verification.", status: "Success", duration: "3.5s" }
-                  ].map((step, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-3 border border-slate-100 bg-slate-50 rounded-xl">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <span className="text-slate-800 font-medium">{step.title}</span>
+                    { id: 1, title: "Stage 1: Raw catalog spec analysis & upload confirmation.", duration: "0.2s" },
+                    { id: 2, title: "Stage 2: Multimodal Gemini vision analysis for feature extraction.", duration: "1.5s" },
+                    { id: 3, title: "Stage 3: Generative AI copywriting for product description & tags.", duration: "1.8s" },
+                    { id: 4, title: "Stage 4: Automated copy construction for ad & email newsletters.", duration: "1.5s" },
+                    { id: 5, title: "Stage 5: Diffusion prompt template styling blocks.", duration: "1.2s" },
+                    { id: 6, title: "Stage 6: Policy and safety compliance evaluation checks.", duration: "1.5s" },
+                    { id: 7, title: "Stage 7 & 8: Human validation submission & approval log.", duration: "Instant" },
+                    { id: 8, title: "Stage 9 & 10: Shopify product creation & live link verification.", duration: "3.5s" }
+                  ].map((step) => {
+                    const statusConfig = (() => {
+                      const s = selectedWorkflow.state;
+                      switch (step.id) {
+                        case 1:
+                          return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                        case 2:
+                          if (["UPLOADED", "ANALYZING"].includes(s)) {
+                            return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                          }
+                          return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                        case 3:
+                          if (["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC"].includes(s)) {
+                            return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                          }
+                          return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                        case 4:
+                          if (["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC", "DESC_GENERATED", "GENERATING_MKTG"].includes(s)) {
+                            return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                          }
+                          return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                        case 5:
+                          if (["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC", "DESC_GENERATED", "GENERATING_MKTG", "MKTG_GENERATED", "GENERATING_PROMPTS"].includes(s)) {
+                            return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                          }
+                          return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                        case 6:
+                          if (["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC", "DESC_GENERATED", "GENERATING_MKTG", "MKTG_GENERATED", "GENERATING_PROMPTS", "PROMPTS_GENERATED", "VALIDATING"].includes(s)) {
+                            return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                          }
+                          return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                        case 7:
+                          if (["APPROVED", "PUBLISHING", "PUBLISHED", "VERIFYING", "COMPLETED"].includes(s)) {
+                            return { label: "Approved", color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" };
+                          }
+                          if (s === "REJECTED" || s === "FAILED") {
+                            return { label: "Rejected", color: "bg-red-100 text-red-700", dot: "bg-red-500" };
+                          }
+                          return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                        case 8:
+                          if (["PUBLISHED", "COMPLETED"].includes(s)) {
+                            return { label: "Success", color: "bg-green-100 text-green-700", dot: "bg-green-500" };
+                          }
+                          if (s === "FAILED") {
+                            return { label: "Failed", color: "bg-red-100 text-red-700", dot: "bg-red-500" };
+                          }
+                          return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                        default:
+                          return { label: "Pending", color: "bg-slate-100 text-slate-500", dot: "bg-slate-300" };
+                      }
+                    })();
+
+                    return (
+                      <div key={step.id} className="flex justify-between items-center p-3 border border-slate-100 bg-slate-50 rounded-xl">
+                        <div className="flex items-center space-x-2.5">
+                          <div className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
+                          <span className="text-slate-800 font-medium">{step.title}</span>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-slate-500 font-mono text-[10px]">{step.duration}</span>
+                          <span className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-full ${statusConfig.color}`}>
+                            {statusConfig.label}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <span className="text-slate-500 font-mono text-[10px]">{step.duration}</span>
-                        <Badge variant="success" className="text-[9px] uppercase font-semibold px-2 py-0">
-                          {step.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

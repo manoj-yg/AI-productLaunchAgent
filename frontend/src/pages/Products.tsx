@@ -2,7 +2,7 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Search, Filter, ShoppingBag, Star, Tag, Eye, CheckCircle,
-  Clock, AlertTriangle, Image, Sparkles, ArrowRight, TrendingUp
+  Clock, AlertTriangle, Image, Sparkles, ArrowRight, TrendingUp, FileText
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useLaunchStore, WorkflowState, LaunchWorkflow } from "../store/useLaunchStore"
@@ -278,19 +278,35 @@ export default function Products() {
                           <span className="text-[10px] text-slate-400 font-medium">{wf.state.replace(/_/g, " ")}</span>
                         )}
 
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs px-3 border-slate-200"
-                          onClick={() => {
-                            useLaunchStore.setState({ activeWorkflowId: wf.id })
-                            navigate(wf.state === "VALIDATED" ? "/review" : "/review")
-                          }}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          {wf.state === "VALIDATED" ? "Review" : "Details"}
-                          <ArrowRight className="w-3 h-3 ml-1" />
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                          {!["UPLOADED", "ANALYZING", "ANALYZED", "GENERATING_DESC"].includes(wf.state) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs px-2.5 border-slate-200 bg-blue-50/50 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                              onClick={() => {
+                                useLaunchStore.setState({ activeWorkflowId: wf.id })
+                                navigate("/reports")
+                              }}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Report
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-3 border-slate-200"
+                            onClick={() => {
+                              useLaunchStore.setState({ activeWorkflowId: wf.id })
+                              navigate("/review")
+                            }}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            {wf.state === "VALIDATED" ? "Review" : "Details"}
+                            <ArrowRight className="w-3 h-3 ml-1" />
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -92,6 +92,36 @@ def create_app() -> FastAPI:
     os.makedirs(UPLOADS_DIR, exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
+    # 6. Serve React frontend static files for production deployment
+    frontend_dist_dir = None
+    possible_paths = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "dist"),
+        os.path.abspath("/frontend/dist"),
+        os.path.abspath("frontend/dist"),
+        os.path.abspath("../frontend/dist"),
+        "/app/frontend/dist"
+    ]
+    for path in possible_paths:
+        if os.path.exists(path) and os.path.exists(os.path.join(path, "index.html")):
+            frontend_dist_dir = path
+            break
+
+    if frontend_dist_dir:
+        assets_dir = os.path.join(frontend_dist_dir, "assets")
+        if os.path.exists(assets_dir):
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend-assets")
+            
+        from fastapi.responses import FileResponse
+        @app.get("/{catchall:path}")
+        async def serve_frontend(catchall: str):
+            static_file = os.path.join(frontend_dist_dir, catchall)
+            if os.path.exists(static_file) and os.path.isfile(static_file):
+                return FileResponse(static_file)
+            return FileResponse(os.path.join(frontend_dist_dir, "index.html"))
+        logger.info(f"Mounted frontend static files from: {frontend_dist_dir}")
+    else:
+        logger.warning("Frontend static build directory not found. Serving API only.")
+
     logger.info("FastAPI Application factory setup completed successfully.")
     return app
 

@@ -309,7 +309,22 @@ export const useLaunchStore = create<LaunchState>((set, get) => ({
     set({ loading: true, error: null })
     try {
       const res = await workflowApi.listWorkflows(30, 0)
-      const workflows = (res.workflows || []).map((w: any) => mapApiToWorkflow(w))
+      const workflows = (res.workflows || [])
+        .map((w: any) => mapApiToWorkflow(w))
+        .filter((w: LaunchWorkflow) => {
+          const idLower = w.id.toLowerCase()
+          const title = w.productDetails.title || ""
+          const titleLower = title.toLowerCase()
+          
+          const isDummy = 
+            idLower.startsWith("seed") || 
+            idLower.startsWith("dummy") ||
+            title.startsWith("KiddyPi") ||
+            titleLower.includes("seed-") ||
+            titleLower.includes("dummy")
+            
+          return !isDummy
+        })
       set({ workflows, loading: false })
     } catch (e: any) {
       set({ error: e.message || "Failed to fetch workflows", loading: false })
