@@ -1,18 +1,23 @@
-FROM node:18-slim
+# Build React app
+FROM node:20 AS build
 
 WORKDIR /app
 
-# Copy dependency files
 COPY package*.json ./
 
-# Install npm packages
 RUN npm install
 
-# Copy application files
 COPY . .
 
-# Expose Vite dev port
-EXPOSE 5173
+RUN npm run build
 
-# Launch dev server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Serve with Nginx
+FROM nginx:alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]
