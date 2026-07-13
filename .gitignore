@@ -51,3 +51,4 @@ docker-compose.override.yml
 # Uploads
 uploads/
 **/uploads/
+backend/ai-product-launch/

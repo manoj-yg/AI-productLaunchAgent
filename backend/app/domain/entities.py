@@ -118,7 +118,7 @@ class LaunchWorkflow(BaseModel):
     created_at: datetime
     updated_at: datetime
     state: WorkflowState = WorkflowState.IDLE
-    product_details: ProductDetails
+    product_details: Optional[ProductDetails] = None
     image_analysis: Optional[ImageAnalysis] = None
     generated_description: Optional[GeneratedDescription] = None
     features: Optional[FeatureGeneratorResult] = None

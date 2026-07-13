@@ -102,8 +102,12 @@ export default function Reports() {
                     <Clock className="w-3.5 h-3.5 text-indigo-600" />
                     <span>Total Runtime</span>
                   </span>
-                  <p className="font-bold text-slate-800">8.5 seconds</p>
-                  <p className="text-[10px] text-slate-500">Pipeline latency standard</p>
+                  <p className="font-bold text-slate-800">
+                    {selectedWorkflow.updatedAt && selectedWorkflow.createdAt
+                      ? `${((new Date(selectedWorkflow.updatedAt).getTime() - new Date(selectedWorkflow.createdAt).getTime()) / 1000).toFixed(1)}s`
+                      : "N/A"}
+                  </p>
+                  <p className="text-[10px] text-slate-500">Pipeline latency</p>
                 </div>
                 <div className="p-4 border border-slate-100 bg-slate-50 rounded-xl space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider flex items-center gap-1">
@@ -216,14 +220,17 @@ export default function Reports() {
               <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500">Shopify Product ID</span>
                 <span className="font-bold text-slate-800 font-mono">
-                  {selectedWorkflow.publication?.shopifyProductId || "shopify-prod-1234"}
+                  {selectedWorkflow.publication?.shopifyProductId || "—"}
                 </span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500">Publication Status</span>
-                <span className="font-bold text-green-600 uppercase tracking-wide flex items-center space-x-1">
+                <span className={`font-bold uppercase tracking-wide flex items-center space-x-1 ${
+                  selectedWorkflow.publication?.verificationStatus === "verified" ? "text-green-600" :
+                  selectedWorkflow.publication?.verificationStatus === "failed" ? "text-red-600" : "text-slate-400"
+                }`}>
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Verified</span>
+                  <span>{selectedWorkflow.publication?.verificationStatus || "Pending"}</span>
                 </span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2">
@@ -258,43 +265,21 @@ export default function Reports() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
-              <div className="h-32 w-full rounded-xl bg-slate-50 border border-slate-100 relative overflow-hidden flex items-end p-2">
-                
-                {/* Simulated Graph SVG */}
-                <svg className="w-full h-full" viewBox="0 0 100 50">
-                  <defs>
-                    <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  
-                  {/* Fill area */}
-                  <path
-                    d="M0,50 L5,45 L15,48 L30,30 L45,35 L60,15 L75,25 L90,5 L100,20 L100,50 Z"
-                    fill="url(#chart-grad)"
-                  />
-                  
-                  {/* Line stroke */}
-                  <path
-                    d="M0,50 L5,45 L15,48 L30,30 L45,35 L60,15 L75,25 L90,5 L100,20"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-
-                <div className="absolute top-2 left-2 text-[10px] text-slate-600">Views count / 24h</div>
-                <div className="absolute bottom-2 right-2 text-[10px] text-green-400 font-bold">+18.5% click-thru</div>
+              <div className="h-32 w-full rounded-xl bg-slate-50 border border-slate-100 relative flex items-center justify-center">
+                <div className="text-center">
+                  <TrendingUp className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-400 font-medium">Analytics not yet available</p>
+                  <p className="text-[10px] text-slate-300">Data will appear once product is live</p>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                <div className="bg-slate-50 p-2 border border-slate-100 rounded-lg">
                   <span className="text-[10px] text-slate-500 uppercase block tracking-wider">Total Views</span>
-                  <span className="font-bold text-slate-200">1,240</span>
+                  <span className="font-bold text-slate-400">—</span>
                 </div>
-                <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                <div className="bg-slate-50 p-2 border border-slate-100 rounded-lg">
                   <span className="text-[10px] text-slate-500 uppercase block tracking-wider">Conversions</span>
-                  <span className="font-bold text-slate-200">4.2%</span>
+                  <span className="font-bold text-slate-400">—</span>
                 </div>
               </div>
             </CardContent>

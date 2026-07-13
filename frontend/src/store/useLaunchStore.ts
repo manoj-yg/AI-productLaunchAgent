@@ -315,14 +315,17 @@ export const useLaunchStore = create<LaunchState>((set, get) => ({
           const idLower = w.id.toLowerCase()
           const title = w.productDetails.title || ""
           const titleLower = title.toLowerCase()
-          
-          const isDummy = 
-            idLower.startsWith("seed") || 
+
+          // Skip legacy documents that were created before product_details existed
+          if (!title.trim()) return false
+
+          const isDummy =
+            idLower.startsWith("seed") ||
             idLower.startsWith("dummy") ||
             title.startsWith("KiddyPi") ||
             titleLower.includes("seed-") ||
             titleLower.includes("dummy")
-            
+
           return !isDummy
         })
       set({ workflows, loading: false })
